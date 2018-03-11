@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[StrZ 的博客]]></title>
-  <link href="http://yoursite.com/atom.xml" rel="self"/>
-  <link href="http://yoursite.com/"/>
-  <updated>2018-03-11T12:15:27+08:00</updated>
-  <id>http://yoursite.com/</id>
+  <link href="http://strzhao.github.io/atom.xml" rel="self"/>
+  <link href="http://strzhao.github.io/"/>
+  <updated>2018-03-11T19:45:06+08:00</updated>
+  <id>http://strzhao.github.io/</id>
   <author>
     <name><![CDATA[Sring Zhao]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Block 了解一下]]></title>
-    <link href="http://yoursite.com/blog/2018/03/11/block-liao-jie-%5B%3F%5D-xia/"/>
+    <link href="http://strzhao.github.io/blog/2018/03/11/block-liao-jie-%5B%3F%5D-xia/"/>
     <updated>2018-03-11T12:13:52+08:00</updated>
-    <id>http://yoursite.com/blog/2018/03/11/block-liao-jie-[?]-xia</id>
+    <id>http://strzhao.github.io/blog/2018/03/11/block-liao-jie-[?]-xia</id>
     <content type="html"><![CDATA[
 ]]></content>
   </entry>
