@@ -5,12 +5,14 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Block 了解一下 - StrZ 的博客</title>
+  <title>谈谈 Objective-C 的 Block 实现 - StrZ 的博客</title>
   <meta name="author" content="Sring Zhao">
 
   
-  <meta name="description" content="
-">
+  <meta name="description" content="我是前言 这篇文章是我自己最近在学习 block 后的一个简单总结。
+这篇总结你可以读到： block 的本质是什么
+block 如何捕获变量
+block 生命周期管理 block 的本质 block 是 Objective-C 对于闭包的实现，闭包用一句话来表示：带有自动变量的匿名函数。 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -37,7 +39,7 @@
   <header role="banner"><hgroup>
   <h1><a href="/">StrZ 的博客</a></h1>
   
-    <h2>我的渔于愚</h2>
+    <h2>我的愚与渔</h2>
   
 </hgroup>
 
@@ -67,7 +69,7 @@
   
   <header>
     
-      <h1 class="entry-title">Block 了解一下</h1>
+      <h1 class="entry-title">谈谈 Objective-C 的 Block 实现</h1>
     
     
       <p class="meta">
@@ -83,7 +85,479 @@
   </header>
 
 
-<div class="entry-content">
+<div class="entry-content"><h2>我是前言</h2>
+
+<p>这篇文章是我自己最近在学习 block 后的一个简单总结。<br/>
+这篇总结你可以读到：</p>
+
+<ul>
+<li>block 的本质是什么</li>
+<li>block 如何捕获变量</li>
+<li>block 生命周期管理</li>
+</ul>
+
+
+<h2>block 的本质</h2>
+
+<p>block 是 Objective-C 对于闭包的实现，闭包用一句话来表示：带有自动变量的匿名函数。<br/>
+所以问题的核心就是 <strong>Objective-C</strong> 如何实现带有<strong>自动变量</strong>的<strong>匿名函数</strong>。<br/>
+先看看我们已经了解的，从 Objective-C 它自身来说就是 C + runtime (+ 编译器)，所以 block 也一定只能是 C 语言层面上的一个扩展。<br/>
+捕获变量和匿名函数，C 语言本身是不支持的，所以这里就需要编译器来帮忙了。<br/>
+我们一起来看看编译器都做了什么。</p>
+
+<p>我们通过执行</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>clang -rewrite-objc xxx.c</span></code></pre></td></tr></table></div></figure>
+
+
+<p>把下边含有 block 的代码转换成 C 语言代码来一探究竟。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>int main(int argc, const char * argv[]) {
+</span><span class='line'>
+</span><span class='line'>    void (^blk)(void) = ^{printf("Hello, World!\n");};
+</span><span class='line'>    blk();
+</span><span class='line'>    return 0;
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>转换后的代码核心部分如下：(同时把类型转换也去掉)</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>struct __block_impl {
+</span><span class='line'>  void *isa;
+</span><span class='line'>  int Flags;
+</span><span class='line'>  int Reserved;
+</span><span class='line'>  void *FuncPtr;
+</span><span class='line'>};
+</span><span class='line'>struct __main_block_impl_0 {
+</span><span class='line'>  struct __block_impl impl;
+</span><span class='line'>  struct __main_block_desc_0* Desc;
+</span><span class='line'>  __main_block_impl_0(void *fp, struct __main_block_desc_0 *desc, int flags=0) {
+</span><span class='line'>    impl.isa = &_NSConcreteStackblock;
+</span><span class='line'>    impl.Flags = flags;
+</span><span class='line'>    impl.FuncPtr = fp;
+</span><span class='line'>    Desc = desc;
+</span><span class='line'>  }
+</span><span class='line'>};
+</span><span class='line'>static void __main_block_func_0(struct __main_block_impl_0 *__cself) {
+</span><span class='line'>    printf("Hello, World!\n");
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>static struct __main_block_desc_0 {
+</span><span class='line'>  size_t reserved;
+</span><span class='line'>  size_t block_size;
+</span><span class='line'>} __main_block_desc_0_DATA = { 0, sizeof(struct __main_block_impl_0)};
+</span><span class='line'>
+</span><span class='line'>int main(int argc, const char * argv[]) {
+</span><span class='line'>
+</span><span class='line'>    void (*blk)(void) = &__main_block_impl_0(__main_block_func_0, &__main_block_desc_0_DATA);
+</span><span class='line'>    blk-&gt;impl.FuncPtr(blk);
+</span><span class='line'>    return 0;
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以看到 block 通过在编译后就是普通的 C 语言代码了，我们逐个来分析下：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>static void __main_block_func_0(struct __main_block_impl_0 *__cself) {
+</span><span class='line'>    printf("Hello, World!\n");
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>匿名函数在根据所属的类以及在类中出现的顺序编译后就是一个普通符合某个规范命名的 C 函数了，其中的参数 <code>struct __main_block_impl_0 *__cself</code> 完全符合 Objective-C 对于 OC 方法处理，如：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)method:(int)arg {
+</span><span class='line'>    NSLog(@"%@ %d", self, arg);
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在编译成 C 语言后大概为这样：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>void _I_Object_method(struct Object *self, SEL _cmd, int arg) {
+</span><span class='line'>    NSLog(@"%@ %d", self, arg);   
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这也是为什么我们在 OC 方法中可以使用 self 指针。额外说一点 OC 的发送消息。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[obj method:1] // 会被编译成下边的形式
+</span><span class='line'>objc_msgSend(obj, sel_resigtName("method:"), 1); // 这里的 obj 就是传到函数中的 self 指针。</span></code></pre></td></tr></table></div></figure>
+
+
+<p>回到 block 中，我们继续去看看 struct __main_block_impl_0 这个 block 对象的结构。(我们把结构体拍扁)</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>struct __main_block_impl_0 {
+</span><span class='line'>    void *isa;  // 用于实现 block 对象的功能 后边说明
+</span><span class='line'>    int Flags;  // 后边说明
+</span><span class='line'>    int Reserved; // 保留字段
+</span><span class='line'>    void *FuncPtr; // 函数指针 在构造时会对应到定义好的匿名函数
+</span><span class='line'>    struct __main_block_desc_0* Desc; // 后边说明用途
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>struct __main_block_desc_0 {
+</span><span class='line'>  size_t reserved;  // 保留字段
+</span><span class='line'>  size_t block_size; // block 的大小
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>很多的字段在这个例子中暂时都没有使用到（isa 除外，这个也留到后边说）。<br/>
+我们先做一个记录，后边会再来解释这些字段:</p>
+
+<ul>
+<li>isa 的作用是什么 ?</li>
+<li>Flags 的作用是什么 ?</li>
+</ul>
+
+
+<p>然后我们来看看 block 的使用。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>void (*blk)(void) = &__main_block_impl_0(__main_block_func_0, &__main_block_desc_0_DATA);
+</span><span class='line'>blk-&gt;impl.FuncPtr(blk);</span></code></pre></td></tr></table></div></figure>
+
+
+<p>至此基本解决了匿名函数的问题，我们总结一下：匿名函数会被编译成一个 C 结构体对象和一个 C 函数，且 C 结构体拥有这个 C 函数指针。<br/>
+定义一个 block 就是初始化一个该 C 结构体的结构体指针，block 的调用就是调用该结构体指针拥有的 C 函数, 并且把自己作为参数传递进去。</p>
+
+<h3>block 如何捕获变量</h3>
+
+<p>C 函数中可能用到的变量有很多，全局静态变量和全局变量显然直接使用就好了，不需要特别处理。
+我们来看看无法直接使用的，先从栈上的基本类型变量开始，继续使用 clang 编译一下代码。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>int main(int argc, const char * argv[]) {
+</span><span class='line'>
+</span><span class='line'>    int val = 3;
+</span><span class='line'>    void (^blk)(void) = ^{printf("Hello, World! val = %d", val);};
+</span><span class='line'>    blk();
+</span><span class='line'>    return 0;
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>删掉无关代码我们得到以下代码</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>struct __main_block_impl_0 {
+</span><span class='line'>  struct __block_impl impl;
+</span><span class='line'>  struct __main_block_desc_0* Desc;
+</span><span class='line'>  int val;
+</span><span class='line'>  __main_block_impl_0(void *fp, struct __main_block_desc_0 *desc, int _val, int flags=0) : val(_val) {
+</span><span class='line'>    impl.isa = &_NSConcreteStackblock;
+</span><span class='line'>    impl.Flags = flags;
+</span><span class='line'>    impl.FuncPtr = fp;
+</span><span class='line'>    Desc = desc;
+</span><span class='line'>  }
+</span><span class='line'>};
+</span><span class='line'>
+</span><span class='line'>static void __main_block_func_0(struct __main_block_impl_0 *__cself) {
+</span><span class='line'>    int val = __cself-&gt;val; // bound by copy
+</span><span class='line'>    printf("Hello, World! val = %d", val);
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>int main(int argc, const char * argv[]) {
+</span><span class='line'>
+</span><span class='line'>    int val = 3;
+</span><span class='line'>    void (*blk)(void) = &__main_block_impl_0((void *)__main_block_func_0, &__main_block_desc_0_DATA, val);
+</span><span class='line'>    blk-&gt;impl.FuncPtr(blk);
+</span><span class='line'>    return 0;
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>从这里我们不难发现，参数 val 其实是作为 block 对应的结构体的一个成员变量在初始化时传递进去达到捕获的效果的，而使用的时候也只需要通过访问该结构体指针的成员变量即可。<br/>
+block 中操作的 val 和外边的 val 已经没有关系了，所以修改 block 中的 val 是没有办法修改外部的 val 的（编译器通过抛出错误告诉我们这样是行不通的），那么想要在 block 中修改 val 要怎么做呢，就要用到我们经常使用的 __block 修饰符。（还有虽然可以但是几乎不用的局部静态变量）</p>
+
+<h4>__block 修饰符</h4>
+
+<p>我们先合理的猜测一下 <code>__block</code> 修饰符会做什么，先前 block 通过构造结构体捕获了匿名函数和变量，达到可以随意使用匿名函数和变量的目的，现在会怎么做呢？<br/>
+想好了，那我们继续来看 <code>__block</code> 修饰符都做了什么。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>int main(int argc, const char * argv[]) {
+</span><span class='line'>
+</span><span class='line'>    __block int val = 3;
+</span><span class='line'>    void (^blk)(void) = ^{printf("Hello, World! val = %d", val);};
+</span><span class='line'>    blk();
+</span><span class='line'>    return 0;
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>得到以下代码</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>struct __block_byref_val_0 {
+</span><span class='line'>  void *__isa;
+</span><span class='line'>  __block_byref_val_0 *__forwarding;
+</span><span class='line'>  int __flags;
+</span><span class='line'>  int __size;
+</span><span class='line'>  int val;
+</span><span class='line'>};
+</span><span class='line'>
+</span><span class='line'>struct __main_block_impl_0 {
+</span><span class='line'>  struct __block_impl impl;
+</span><span class='line'>  struct __main_block_desc_0* Desc;
+</span><span class='line'>  __block_byref_val_0 *val; // by ref
+</span><span class='line'>  __main_block_impl_0(void *fp, struct __main_block_desc_0 *desc, __block_byref_val_0 *_val, int flags=0) : val(_val-&gt;__forwarding) {
+</span><span class='line'>    impl.isa = &_NSConcreteStackblock;
+</span><span class='line'>    impl.Flags = flags;
+</span><span class='line'>    impl.FuncPtr = fp;
+</span><span class='line'>    Desc = desc;
+</span><span class='line'>  }
+</span><span class='line'>};
+</span><span class='line'>
+</span><span class='line'>static void __main_block_func_0(struct __main_block_impl_0 *__cself) {
+</span><span class='line'>  __block_byref_val_0 *val = __cself-&gt;val; // bound by ref
+</span><span class='line'>  printf("Hello, World! val = %d", (val-&gt;__forwarding-&gt;val));
+</span><span class='line'>}
+</span><span class='line'>static void __main_block_copy_0(struct __main_block_impl_0*dst, struct __main_block_impl_0*src) {
+</span><span class='line'>    _block_object_assign((void*)&dst-&gt;val, (void*)src-&gt;val, 8);
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>static void __main_block_dispose_0(struct __main_block_impl_0*src) {
+</span><span class='line'>    _block_object_dispose((void*)src-&gt;val, 8);
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>static struct __main_block_desc_0 {
+</span><span class='line'>  size_t reserved;
+</span><span class='line'>  size_t block_size;
+</span><span class='line'>  void (*copy)(struct __main_block_impl_0*, struct __main_block_impl_0*);
+</span><span class='line'>  void (*dispose)(struct __main_block_impl_0*);
+</span><span class='line'>} __main_block_desc_0_DATA = { 0, sizeof(struct __main_block_impl_0), __main_block_copy_0, __main_block_dispose_0};
+</span><span class='line'>
+</span><span class='line'>int main(int argc, const char * argv[]) {
+</span><span class='line'>
+</span><span class='line'>    __block_byref_val_0 val = {(void*)0,(__block_byref_val_0 *)&val, 0, sizeof(__block_byref_val_0), 3};
+</span><span class='line'>    void (*blk)(void) = &__main_block_impl_0((void *)__main_block_func_0, &__main_block_desc_0_DATA, (__block_byref_val_0 *)&val, 570425344);
+</span><span class='line'>    blk-&gt;impl.FuncPtr(blk);
+</span><span class='line'>    return 0;
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>我们可以看到变量 val 已经变成了结构体 <code>__block_byref_val_0</code>, 之前的 block 对象 <code>__main_block_impl_0</code> 也拥有了 <code>__block_byref_val_0</code> 结构体实例指针，修改 val 就变成了修改结构体指针指向的结构体实例的变量 val 的值。<br/>
+可能比之前我们想象的要复杂一些，但从本质来说就是通过直接传值修改为传指针，这和我们之前的猜测应该是差不多的。<br/>
+但是似乎事情也变得复杂了很多，我们先罗列以下，后边一一解释。</p>
+
+<ul>
+<li><code>__block_byref_val_0</code> 中 <code>__forwarding</code> 指针的意义是什么？</li>
+<li><code>__main_block_desc_0</code> 中 <code>copy</code> 和 <code>dispose</code> 函数的意义是什么？</li>
+</ul>
+
+
+<p>加上之前留下的问题，都和 block 的生命周期有关</p>
+
+<ul>
+<li>isa 的作用是什么 ?</li>
+<li>Flags 的作用是什么 ?</li>
+</ul>
+
+
+<h3>block 的生命周期管理</h3>
+
+<h4>isa 的作用是什么</h4>
+
+<p>我们一直在说 block 对象，却也一直没有谈到 block 这个对象的生命周期要如何管理，所以我们先来解决 block 自身的生命周期管理问题。<br/>
+而其中的关键就是 isa 指针。<br/>
+<del>isa 在 OC 对象设计中的作用不是本次的目的，暂时忽略不表</del><br/>
+我们来看看 block 的 isa 的几个类型：</p>
+
+<ul>
+<li>_NSConcreteGlobalblock 程序的数据区域</li>
+<li>_NSConcreteStackblock 栈上 出了作用域就释放</li>
+<li>_NSConcreteMallocblock 堆上 引用计数为 0 时释放</li>
+</ul>
+
+
+<p>而栈上的 block 可以复制到堆上来延长生命周期。<br/>
+在下边这些情况下编译器可以正确的处理复制：</p>
+
+<ul>
+<li>调用 <code>copy</code> 方法</li>
+<li>block 作为函数的返回值</li>
+<li>将 block 赋值为 <code>__strong</code> 修饰的 id 类型 或者 block 类型的成员变量</li>
+<li>在方法名中含有 <code>usingBlock</code> 的 Cocoa 框架方法 和 GCD 的 的方法</li>
+</ul>
+
+
+<p>例如 block 作为函数返回的情况：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>float ^(float x) doubel(float x) {
+</span><span class='line'>    return ^(float x) {
+</span><span class='line'>        return x * 2;
+</span><span class='line'>    };
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>// 编译后
+</span><span class='line'>
+</span><span class='line'>float ^(float x) doubel(float x) {
+</span><span class='line'>
+</span><span class='line'>    blk tmp = &__func_block_impl_0(__func_block_func_0, &__func_block_desc_0_DATA, x);
+</span><span class='line'>
+</span><span class='line'>    tmp = objc_retainBlock(tmp); // 从栈上复制到堆上
+</span><span class='line'>
+</span><span class='line'>    return objc_autoreleaseReturnValue(tmp); // 加到 autoreleasepool 中
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这也是为什么 block 在超过变量作用域后还可以继续使用的原因。</p>
+
+<p><del>但是在某些情况下系统是无法高效的做出判断的，那么就需要我们自己来调用 <code>copy</code> 把 block 复制到堆上，例如 <code>[NSArray initWithObjects:]</code> 方法，如果我们不手动的执行 <code>copy</code> 当获取数组中的对象并且执行时是会崩溃的。大家可以自行尝试。</del> MRC 情况下才会出现, ARC 不会。</p>
+
+<h4>__forwarding 的意义</h4>
 </div>
 
 
@@ -130,7 +604,7 @@
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2018/03/11/block-liao-jie-%5B%3F%5D-xia/">Block 了解一下</a>
+        <a href="/blog/2018/03/11/block-liao-jie-%5B%3F%5D-xia/">谈谈 Objective-C 的 Block 实现</a>
       </li>
     
   </ul>
