@@ -4,7 +4,7 @@
   <title><![CDATA[StrZ 的博客]]></title>
   <link href="http://strzhao.github.io/atom.xml" rel="self"/>
   <link href="http://strzhao.github.io/"/>
-  <updated>2018-03-12T02:41:21+08:00</updated>
+  <updated>2018-03-13T04:37:27+08:00</updated>
   <id>http://strzhao.github.io/</id>
   <author>
     <name><![CDATA[Sring Zhao]]></name>
@@ -32,19 +32,19 @@
 
 <h2>block 的本质</h2>
 
-<p>block 是 Objective-C 对于闭包的实现，闭包用一句话来表示：带有自动变量的匿名函数。<br/>
-所以问题的核心就是 <strong>Objective-C</strong> 如何实现带有<strong>自动变量</strong>的<strong>匿名函数</strong>。<br/>
-先看看我们已经了解的，从 Objective-C 它自身来说就是 C + runtime (+ 编译器)，所以 block 也一定只能是 C 语言层面上的一个扩展。<br/>
-捕获变量和匿名函数，C 语言本身是不支持的，所以这里就需要编译器来帮忙了。<br/>
-我们一起来看看编译器都做了什么。</p>
+<p>在开始了解 block 的实现前，我们先简单的回顾一下 block 是什么。<br/>
+block 是<a href="https://zh.wikipedia.org/wiki/%E9%97%AD%E5%8C%85_(%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6">闭包</a>在 C 语言上的实现，那么闭包是什么呢？借用 wiki 上的一句话概括：</p>
 
-<p>我们通过执行</p>
+<blockquote><p>带有自动变量的匿名函数</p></blockquote>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>clang -rewrite-objc xxx.c</span></code></pre></td></tr></table></div></figure>
+<p>所以现在问题的核心就是如何在 C 上实现带有自动变量的匿名函数</p>
 
+<blockquote><p>闭包的典型实现方式是定义一个特殊的数据结构，保存了函数地址指针与闭包创建时的函数的词法环境表示（那些非局部变量的绑定）</p></blockquote>
 
-<p>把下边含有 block 的代码转换成 C 语言代码来一探究竟。</p>
+<p>C 语言的 block 实现也确实是这样的思路，而其中定义数据结构，保存函数指针和函数词法环境这样的脏活就交给编译器去完成就好了。
+牢记这几个核心点，我们一起来看看编译器都做了什么。</p>
+
+<p>我们新建一个 main.c, 其中代码如下:</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -58,6 +58,12 @@
 </span><span class='line'>    blk();
 </span><span class='line'>    return 0;
 </span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>然后我们执行下边命令，clang 可以把带有 block 的源代码转换成 C++ 的代码。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>clang -rewrite-objc main.c</span></code></pre></td></tr></table></div></figure>
 
 
 <p>转换后的代码核心部分如下：(同时把类型转换也去掉)</p>
@@ -126,45 +132,7 @@
 </span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
 
 
-<p>可以看到 block 通过在编译后就是普通的 C 语言代码了，我们逐个来分析下：</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>static void __main_block_func_0(struct __main_block_impl_0 *__cself) {
-</span><span class='line'>    printf("Hello, World!\n");
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
-
-
-<p>匿名函数在根据所属的类以及在类中出现的顺序编译后就是一个普通符合某个规范命名的 C 函数了，其中的参数 <code>struct __main_block_impl_0 *__cself</code> 完全符合 Objective-C 对于 OC 方法处理，如：</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)method:(int)arg {
-</span><span class='line'>    NSLog(@"%@ %d", self, arg);
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
-
-
-<p>在编译成 C 语言后大概为这样：</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>void _I_Object_method(struct Object *self, SEL _cmd, int arg) {
-</span><span class='line'>    NSLog(@"%@ %d", self, arg);   
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
-
-
-<p>这也是为什么我们在 OC 方法中可以使用 self 指针。额外说一点 OC 的发送消息。</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>[obj method:1] // 会被编译成下边的形式
-</span><span class='line'>objc_msgSend(obj, sel_resigtName("method:"), 1); // 这里的 obj 就是传到函数中的 self 指针。</span></code></pre></td></tr></table></div></figure>
-
-
-<p>回到 block 中，我们继续去看看 struct __main_block_impl_0 这个 block 对象的结构。(我们把结构体拍扁)</p>
+<p>可以看到 block 通过在编译后就是普通的 C++ 代码了，围绕之前的核心要点我们逐个来分析下，首先是数据结构部分 <code>__main_block_impl_0</code>，我们把结构体拍扁，然后去掉构造函数。</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -179,7 +147,7 @@
 <span class='line-number'>11</span>
 <span class='line-number'>12</span>
 </pre></td><td class='code'><pre><code class=''><span class='line'>struct __main_block_impl_0 {
-</span><span class='line'>    void *isa;  // 用于实现 block 对象的功能 后边说明
+</span><span class='line'>    void *isa;  // 用于实现 block 对象的功能
 </span><span class='line'>    int Flags;  // 后边说明
 </span><span class='line'>    int Reserved; // 保留字段
 </span><span class='line'>    void *FuncPtr; // 函数指针 在构造时会对应到定义好的匿名函数
@@ -188,34 +156,87 @@
 </span><span class='line'>
 </span><span class='line'>struct __main_block_desc_0 {
 </span><span class='line'>  size_t reserved;  // 保留字段
-</span><span class='line'>  size_t block_size; // block 的大小
+</span><span class='line'>  size_t block_size; // block 的大小 用于 malloc 
 </span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
 
 
-<p>很多的字段在这个例子中暂时都没有使用到（isa 除外，这个也留到后边说）。<br/>
-我们先做一个记录，后边会再来解释这些字段:</p>
+<ol>
+<li>果然 block 被转换成了相应的一个数据结构</li>
+<li>该结构体有一个 isa 指针，所以 block 是一个 OC 对象。</li>
+<li>Flags 标记位，这个用于生命周期管理，后边会详细说明。</li>
+<li>Reserved 保留字段。</li>
+<li>函数指针，显然就是用于保存 block 对应的"匿名函数"的</li>
+<li><code>__main_block_desc_0</code> 结构体指针，也后边再来详细说明。</li>
+</ol>
+
+
+<p>明白了结构体，我们继续来看函数指针 <code>__block_impl</code> 指向的函数</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>static void __main_block_func_0(struct __main_block_impl_0 *__cself) {
+</span><span class='line'>    printf("Hello, World!\n");
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>对应的就是之前 block 的表达式部分。<br/>
+编译器把一个表达式根据它所属的类以及在类中出现的顺序在编译成一个普通的 C 函数, 而 block 对象持有了这个函数的函数指针，此时 block 就已经可以调用了。<br/>
+而其中的参数 <code>struct __main_block_impl_0 *__cself</code> 非常有意思，因为他很好的体现了编译器是如何处理 Objective-C 的 OC 方法的，我们来看一个普通的 OC 方法：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)method:(int)arg {
+</span><span class='line'>    NSLog(@"%@ %d", self, arg);
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在编译成 C++ 后大概为这样：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>void _I_Object_method(struct Object *self, SEL _cmd, int arg) {
+</span><span class='line'>    NSLog(@"%@ %d", self, arg);   
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这里的处理和 block 中对方法的处理是一模一样的。<br/>
+这也说明了为什么我们在 OC 方法中可以使用 self 指针的原因。<br/>
+额外说一点编译器怎么处理 OC 往一个对象发送消息。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[obj method:1] // 会被编译成下边的形式
+</span><span class='line'>objc_msgSend(obj, sel_resigtName("method:"), 1); // 这里的 obj 就是传到函数中的 self 指针。</span></code></pre></td></tr></table></div></figure>
+
+
+<p>因为例子中没有使用外部的变量，所有我们暂时先略过自动变量的实现问题，最后我们来看看 block 的使用。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>void (*blk)(void) = &__main_block_impl_0(__main_block_func_0, &__main_block_desc_0_DATA); \\ void (^blk)(void) = ^{printf("Hello, World!\n");};    
+</span><span class='line'>blk-&gt;impl.FuncPtr(blk); \\ blk();</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这里的 block 就是在<em>栈</em>上构造的 <code>__main_block_impl_0</code> 结构体，其中参数为 <code>__main_block_func_0</code> 函数指针和 <code>__main_block_desc_0_DATA</code> 静态的结构体指针。</p>
+
+<p>至此基本明白了 block 的实现，我们总结一下：block 会被编译成一个 C 结构体对象和一个 C 函数，且 C 结构体拥有这个 C 函数指针。<br/>
+定义一个 block 就是初始化一个该 C 结构体的结构体指针，block 的调用就是调用该结构体指针指向的 C 函数, 并且把自己作为参数传递进去。<br/>
+但是我们也多了很多疑问，我们先做一个记录，后边再来一一解释：</p>
 
 <ul>
-<li>isa 的作用是什么 ?</li>
+<li>block 对象是在栈上的，那么如何超出作用域而存在 ？</li>
 <li>Flags 的作用是什么 ?</li>
 </ul>
 
 
-<p>然后我们来看看 block 的使用。</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>void (*blk)(void) = &__main_block_impl_0(__main_block_func_0, &__main_block_desc_0_DATA);
-</span><span class='line'>blk-&gt;impl.FuncPtr(blk);</span></code></pre></td></tr></table></div></figure>
-
-
-<p>至此基本解决了匿名函数的问题，我们总结一下：匿名函数会被编译成一个 C 结构体对象和一个 C 函数，且 C 结构体拥有这个 C 函数指针。<br/>
-定义一个 block 就是初始化一个该 C 结构体的结构体指针，block 的调用就是调用该结构体指针拥有的 C 函数, 并且把自己作为参数传递进去。</p>
-
 <h3>block 如何捕获变量</h3>
 
-<p>C 函数中可能用到的变量有很多，全局静态变量和全局变量显然直接使用就好了，不需要特别处理。
-我们来看看无法直接使用的，先从栈上的基本类型变量开始，继续使用 clang 编译一下代码。</p>
+<p>我们先继续之前的 block 实现，把自动变量的实现先弄明白。<br/>
+C 函数中可能用到的变量有很多，其中全局静态变量和全局变量显然直接使用就好了，不需要特别处理。
+我们重点来看看无法直接使用的，先从栈上的基本类型变量开始，继续使用 clang 编译下边的代码。</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -285,12 +306,17 @@
 </span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
 
 
-<p>从这里我们不难发现，参数 val 其实是作为 block 对应的结构体的一个成员变量在初始化时传递进去达到捕获的效果的，而使用的时候也只需要通过访问该结构体指针的成员变量即可。<br/>
-block 中操作的 val 和外边的 val 已经没有关系了，所以修改 block 中的 val 是没有办法修改外部的 val 的（编译器通过抛出错误告诉我们这样是行不通的），那么想要在 block 中修改 val 要怎么做呢，就要用到我们经常使用的 __block 修饰符。（还有虽然可以但是几乎不用的局部静态变量）</p>
+<ol>
+<li>从这里我们不难发现，参数 val 其实是作为 block 对应的结构体的一个成员变量在初始化时作为参数传递进去的，而使用的时候也只需要通过访问该结构体指针 <code>__main_block_impl_0</code> 的成员变量即可。</li>
+<li>block 中操作的 val 和外边的 val 已经没有关系了，所以修改 block 中的 val 是没有办法修改外部的 val 的（编译器通过抛出错误告诉我们这样是行不通的）。</li>
+</ol>
+
+
+<p>那么想要在 block 中修改 val 要怎么做呢？就要用到我们经常使用的 __block 修饰符。（局部静态变量也可以但是几乎不用）</p>
 
 <h4>__block 修饰符</h4>
 
-<p>我们先合理的猜测一下 <code>__block</code> 修饰符会做什么，先前 block 通过构造结构体捕获了匿名函数和变量，达到可以随意使用匿名函数和变量的目的，现在会怎么做呢？<br/>
+<p>我们可以先试着猜测一下 <code>__block</code> 修饰符会做什么，先前 block 通过构造结构体捕获了匿名函数和变量，达到可以随意使用匿名函数和变量的目的，现在会怎么做？<br/>
 想好了，那我们继续来看 <code>__block</code> 修饰符都做了什么。</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
@@ -405,52 +431,33 @@ block 中操作的 val 和外边的 val 已经没有关系了，所以修改 blo
 </span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
 
 
-<p>我们可以看到变量 val 已经变成了结构体 <code>__block_byref_val_0</code>, 之前的 block 对象 <code>__main_block_impl_0</code> 也拥有了 <code>__block_byref_val_0</code> 结构体实例指针，修改 val 就变成了修改结构体指针指向的结构体实例的变量 val 的值。<br/>
-可能比之前我们想象的要复杂一些，但从本质来说就是通过直接传值修改为传指针，这和我们之前的猜测应该是差不多的。<br/>
-但是似乎事情也变得复杂了很多，我们先罗列以下，后边一一解释。</p>
+<ol>
+<li>我们可以看到变量 val 已经变成了对象 <code>__block_byref_val_0</code>, 之前的 block 对象 <code>__main_block_impl_0</code> 也拥有了 <code>__block_byref_val_0</code> 结构体实例指针，修改 val 就变成了修改结构体指针指向的结构体实例的变量 val 的值。</li>
+<li>可能比之前我们想象的要复杂一些，但从本质来说就是<em>通过直接传值修改为传指针</em>，这和我们之前的猜测应该是差不多的。</li>
+</ol>
+
+
+<p>至此我们已经基本明白了 block 的实现。<br/>
+但是似乎事情也变得复杂了很多，我们还有这些疑问没有解决，而这些问题都和 block 的生命周期有关：</p>
 
 <ul>
-<li><code>__block_byref_val_0</code> 中 <code>__forwarding</code> 指针的意义是什么？</li>
-<li><code>__main_block_desc_0</code> 中 <code>copy</code> 和 <code>dispose</code> 函数的意义是什么？</li>
-</ul>
-
-
-<p>加上之前留下的问题，都和 block 的生命周期有关</p>
-
-<ul>
-<li>isa 的作用是什么 ?</li>
+<li>block 对象是在栈上的，那么如何超出作用域而存在 ？</li>
 <li>Flags 的作用是什么 ?</li>
+<li><code>__main_block_desc_0</code> 中 <code>copy</code> 和 <code>dispose</code> 函数的意义是什么？</li>
+<li><code>__block_byref_val_0</code> 中 <code>__forwarding</code> 指针的意义是什么？</li>
 </ul>
 
 
 <h3>block 的生命周期管理</h3>
 
-<h4>isa 的作用是什么</h4>
+<h4>block 的生命周期管理</h4>
 
-<p>我们一直在说 block 对象，却也一直没有谈到 block 这个对象的生命周期要如何管理，所以我们先来解决 block 自身的生命周期管理问题。<br/>
-而其中的关键就是 isa 指针。<br/>
-<del>isa 在 OC 对象设计中的作用不是本次的目的，暂时忽略不表</del><br/>
-我们来看看 block 的 isa 的几个类型：</p>
+<p>稀缺是一个基本事实，在计算机中也是，正如堆栈的设计是为了提高内存的使用效率, 不同类型的 block 也是基于这样的目的设计的，也我们来看看 block 的几个类型：</p>
 
-<ul>
-<li>_NSConcreteGlobalblock 程序的数据区域</li>
-<li>_NSConcreteStackblock 栈上 出了作用域就释放</li>
-<li>_NSConcreteMallocblock 堆上 引用计数为 0 时释放</li>
-</ul>
+<p><img src="http://oaeal18u2.bkt.clouddn.com/2018-03-13%2012.26.48.png" alt="2018-03-13 12.26.48.png" /></p>
 
-
-<p>而栈上的 block 可以复制到堆上来延长生命周期。<br/>
-在下边这些情况下编译器可以正确的处理复制：</p>
-
-<ul>
-<li>调用 <code>copy</code> 方法</li>
-<li>block 作为函数的返回值</li>
-<li>将 block 赋值为 <code>__strong</code> 修饰的 id 类型 或者 block 类型的成员变量</li>
-<li>在方法名中含有 <code>usingBlock</code> 的 Cocoa 框架方法 和 GCD 的 的方法</li>
-</ul>
-
-
-<p>例如 block 作为函数返回的情况：</p>
+<p>那么现在可以回答来在栈上构造的 block 对象是如何超出作用域而存在的问题了<br/>
+我们通过看 block 作为函数返回的代码来理解这个过程:</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -486,11 +493,413 @@ block 中操作的 val 和外边的 val 已经没有关系了，所以修改 blo
 </span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
 
 
-<p>这也是为什么 block 在超过变量作用域后还可以继续使用的原因。</p>
+<ol>
+<li>栈上的 block 通过 objc_retainBlock 可以复制到堆上。</li>
+<li>加到 autoreleasepool 就可以在函数外被使用了</li>
+</ol>
+
+
+<p>我们深入的来了解下 <code>objc_retainBlock</code> 如何把 block 复制到堆上的，通过 objc4 运行时库 我们可以看到 <code>objc_retainBlock</code> 实际上就是 <code>_Block_copy</code> 函数
+我们直接来看看 <code>_Block_copy</code> 的<a href="http://llvm.org/svn/llvm-project/compiler-rt/trunk/lib/BlocksRuntime/runtime.c">源码</a>实现 (代码暂时把 GC 部分都先去掉了)</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>void *_Block_copy(const void *arg) {
+</span><span class='line'>    // 1
+</span><span class='line'>    return _Block_copy_internal(arg, WANTS_ONE);
+</span><span class='line'>}
+</span><span class='line'>static void *_Block_copy_internal(const void *arg, const int flags) {
+</span><span class='line'>    struct Block_layout *aBlock;
+</span><span class='line'>    const bool wantsOne = (WANTS_ONE & flags) == WANTS_ONE;
+</span><span class='line'>
+</span><span class='line'>    if (!arg) return NULL;
+</span><span class='line'>
+</span><span class='line'>    // 2
+</span><span class='line'>    aBlock = (struct Block_layout *)arg;
+</span><span class='line'>
+</span><span class='line'>    // 3
+</span><span class='line'>    if (aBlock-&gt;flags & BLOCK_NEEDS_FREE) {
+</span><span class='line'>        // latches on high
+</span><span class='line'>        latching_incr_int(&aBlock-&gt;flags);
+</span><span class='line'>        return aBlock;
+</span><span class='line'>    }
+</span><span class='line'>
+</span><span class='line'>    // 4
+</span><span class='line'>    else if (aBlock-&gt;flags & BLOCK_IS_GLOBAL) {
+</span><span class='line'>        return aBlock;
+</span><span class='line'>    }
+</span><span class='line'>
+</span><span class='line'>    // 5
+</span><span class='line'>    struct Block_layout *result = malloc(aBlock-&gt;descriptor-&gt;size);
+</span><span class='line'>    if (!result) return (void *)0;
+</span><span class='line'>
+</span><span class='line'>    // 6
+</span><span class='line'>    memmove(result, aBlock, aBlock-&gt;descriptor-&gt;size); // bitcopy first
+</span><span class='line'>
+</span><span class='line'>    // 7
+</span><span class='line'>    result-&gt;flags &= ~(BLOCK_REFCOUNT_MASK);    // XXX not needed
+</span><span class='line'>    result-&gt;flags |= BLOCK_NEEDS_FREE | 1;
+</span><span class='line'>
+</span><span class='line'>    // 8
+</span><span class='line'>    result-&gt;isa = _NSConcreteMallocBlock;
+</span><span class='line'>
+</span><span class='line'>    // 9
+</span><span class='line'>    if (result-&gt;flags & BLOCK_HAS_COPY_DISPOSE) {
+</span><span class='line'>        (*aBlock-&gt;descriptor-&gt;copy)(result, aBlock); // do fixup
+</span><span class='line'>    }
+</span><span class='line'>
+</span><span class='line'>    return result;
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li><code>_Block_copy</code> 内部调用的是 <code>_Block_copy_internal</code></li>
+<li>获取 block 的结构体对象指针</li>
+<li>BLOCK_NEEDS_FREE 说明已经是一个堆上的 block 了，那么简单的增加引用计数即可, 这里也很好的说明了 flag 是做什么用的。</li>
+<li>BLOCK_IS_GLOBAL 说明是一个全局的 block，直接返回即可。</li>
+<li>在堆上创建内存，可以看到之前 <code>__main_block_desc_0</code> 的 <code>block_size</code> 此时就派上用场了。</li>
+<li>复制数据结构</li>
+<li>flags 设置上 BLOCK_NEEDS_FREE 用来说明已经是堆上的</li>
+<li>设置 isa 为 _NSConcreteMallocBlock 类型。</li>
+<li>如果设置了 BLOCK_HAS_COPY_DISPOSE 就去执行 descriptor 的 copy 函数，这个留到下边再说明。</li>
+</ol>
+
+
+<p>复制到堆上就需要自己来管理 block 的内存释放了，而这个过程是通过 <code>Block_release()</code> 来完成的，我们继续要看代码。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>void _Block_release(void *arg) {
+</span><span class='line'>    struct Block_layout *aBlock = (struct Block_layout *)arg;
+</span><span class='line'>    int32_t newCount;
+</span><span class='line'>    if (!aBlock) return;
+</span><span class='line'>
+</span><span class='line'>    // 1
+</span><span class='line'>    newCount = latching_decr_int(&aBlock-&gt;flags) & BLOCK_REFCOUNT_MASK;
+</span><span class='line'>
+</span><span class='line'>    // 2
+</span><span class='line'>    if (newCount &gt; 0) return;
+</span><span class='line'>
+</span><span class='line'>    // 3
+</span><span class='line'>   if (aBlock-&gt;flags & BLOCK_NEEDS_FREE) {
+</span><span class='line'>        if (aBlock-&gt;flags & BLOCK_HAS_COPY_DISPOSE)(*aBlock-&gt;descriptor-&gt;dispose)(aBlock);
+</span><span class='line'>        // 4
+</span><span class='line'>        _Block_deallocator(aBlock);
+</span><span class='line'>    }
+</span><span class='line'>    // 5
+</span><span class='line'>    else if (aBlock-&gt;flags & BLOCK_IS_GLOBAL) {
+</span><span class='line'>        ;
+</span><span class='line'>    }
+</span><span class='line'>    else {
+</span><span class='line'>        printf("Block_release called upon a stack Block: %p, ignored\n", (void *)aBlock);
+</span><span class='line'>    }
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>static void (*_Block_deallocator)(const void *) = (void (*)(const void *))free;
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>每次 release 都会把引用计数减一</li>
+<li>如果引用计数还没有为 0 则直接返回了</li>
+<li>如果是堆上的而且设置了 BLOCK_HAS_COPY_DISPOSE 就去执行 dispose，这个也留到后边来说明</li>
+<li><code>_Block_deallocator</code> 就是 <code>free</code>， 用于释放堆上的 block 对象的内存</li>
+<li>如果是全局或者栈上的 block 就什么都不执行</li>
+</ol>
+
+
+<p>总结一下：<br/>
+1. 栈上的 block 对象在需要时会通过 <code>_Block_copy</code> 复制到堆上，从而达到脱离作用域也可以访问。
+2. Flags 做为标记位，用于维护 block 的状态</p>
+
+<p>额外说一点在下边这些情况下编译器都可以正确的处理复制：</p>
+
+<ul>
+<li>手动调用 <code>copy</code> 方法</li>
+<li>block 作为函数的返回值</li>
+<li>将 block 赋值为 <code>__strong</code> 修饰的 id 类型 或者 block 类型的成员变量</li>
+<li>在方法名中含有 <code>usingBlock</code> 的 Cocoa 框架方法 和 GCD 的 的方法</li>
+</ul>
+
 
 <p><del>但是在某些情况下系统是无法高效的做出判断的，那么就需要我们自己来调用 <code>copy</code> 把 block 复制到堆上，例如 <code>[NSArray initWithObjects:]</code> 方法，如果我们不手动的执行 <code>copy</code> 当获取数组中的对象并且执行时是会崩溃的。大家可以自行尝试。</del> MRC 情况下才会出现, ARC 不会。</p>
 
+<h4>block 引用变量的生命周期管理</h4>
+
+<p>理解完 block 的生命周期管理后，我们发现麻烦事才刚刚开始。
+在 block 复制到堆上的过程中，block 一共需要处理 4 种类型的变量，而这些处理都是通过 <code>__main_block_desc_0</code> 中的 <code>copy</code> 来处理的。<br/>
+需要处理的对象包括:</p>
+
+<ul>
+<li>C++ 栈对象</li>
+<li>OC 对象</li>
+<li>其它的 block</li>
+<li>__block 修饰的变量</li>
+</ul>
+
+
+<p>我们来看看是怎么处理的</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>static void __main_block_copy_0(struct __main_block_impl_0*dst, struct __main_block_impl_0*src) {
+</span><span class='line'>
+</span><span class='line'>    // 1
+</span><span class='line'>    // 2
+</span><span class='line'>    _block_object_assign((void*)&dst-&gt;val, (void*)src-&gt;val, 8);
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>void _Block_object_assign(void *destAddr, const void *object, const int flags) {
+</span><span class='line'>    // 3
+</span><span class='line'>    if ((flags & BLOCK_BYREF_CALLER) == BLOCK_BYREF_CALLER) {
+</span><span class='line'>        if ((flags & BLOCK_FIELD_IS_WEAK) == BLOCK_FIELD_IS_WEAK) {
+</span><span class='line'>            _Block_assign_weak(object, destAddr);
+</span><span class='line'>        }
+</span><span class='line'>        else {
+</span><span class='line'>            // do *not* retain or *copy* __block variables whatever they are
+</span><span class='line'>            _Block_assign((void *)object, destAddr);
+</span><span class='line'>        }
+</span><span class='line'>    }
+</span><span class='line'>
+</span><span class='line'>    // 4
+</span><span class='line'>    else if ((flags & BLOCK_FIELD_IS_BYREF) == BLOCK_FIELD_IS_BYREF)  {
+</span><span class='line'>        _Block_byref_assign_copy(destAddr, object, flags);
+</span><span class='line'>    }
+</span><span class='line'>
+</span><span class='line'>    // 5
+</span><span class='line'>    else if ((flags & BLOCK_FIELD_IS_BLOCK) == BLOCK_FIELD_IS_BLOCK) {
+</span><span class='line'>
+</span><span class='line'>        _Block_assign(_Block_copy_internal(object, flags), destAddr);
+</span><span class='line'>    }
+</span><span class='line'>
+</span><span class='line'>    // 6
+</span><span class='line'>    else if ((flags & BLOCK_FIELD_IS_OBJECT) == BLOCK_FIELD_IS_OBJECT) {
+</span><span class='line'>
+</span><span class='line'>        _Block_retain_object(object);
+</span><span class='line'>        _Block_assign((void *)object, destAddr);
+</span><span class='line'>    }
+</span><span class='line'>}
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li><code>__main_block_desc_0</code> 也是通过编译器自动生成，内部都回统一调用到 <code>_block_object_assign</code> 函数。</li>
+<li>这里最后一个参数传入了 8，参数的含义是编译器用来告诉 <code>_block_object_assign</code> 捕获的对象是什么类型的。含义如下：<br/>
+BLOCK_FIELD_IS_OBJECT (3)， OC 对象<br/>
+BLOCK_FIELD_IS_BLOCK (7)， 其它的 block<br/>
+BLOCK_FIELD_IS_BYREF (8)，<strong>block 修饰的变量<br/>
+如果 BLOCK_FIELD_IS_BYREF 还是 </strong>weak 修饰的还要加上 BLOCK_FIELD_IS_WEAK (16)<br/>
+所以这里的 8 就是就代表 BLOCK_FIELD_IS_BYREF，就是我们之前定义的 <code>__block int val</code></li>
+<li>如何设置了 BLOCK_BYREF_CALLER，那么简单的赋值复制就好，不需要 copy 了。</li>
+<li>如果捕获对象的类型是 __block 修饰的变量, 那么把栈上的 <code>__block_byref_val_0</code> 对象复制到堆上。</li>
+<li>如果捕获对象是 block，那么通过 <code>_Block_copy_internal</code> 把对象从栈上复制到堆上</li>
+<li>如果捕获对象是 OC 对象，那么就引用计数加 1 即可。(这也是 block 循环引用发生的充分条件)</li>
+</ol>
+
+
+<p>至此 <code>__block_byref_val_0</code> 对象的生命周期在 block 被复制时也得到很好的管理了。<br/>
+当堆上的 block 被释放时 <code>dispose</code> 也可能会被执行，从而在释放自动变量。</p>
+
 <h4>__forwarding 的意义</h4>
+
+<p>理解完 block 和 <code>__block_byref_val_0</code> 的复制操作，那么再来理解 <code>__forwarding</code> 就非常顺利了。<br/>
+我们来看一段代码</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>__block int val = 3;
+</span><span class='line'>void (^blk)(void) = ^{printf("Hello, World! val = %d", val);};
+</span><span class='line'>++val;
+</span><span class='line'>blk();</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>void (^blk)(void)</code> 想到的于是 <code>__strong void (^blk)(void)</code>，所有这里的 block 对象在被 <code>void (^blk)(void)</code> 引用时 block 就被复制到堆上了，同时 <code>__block int val</code> 也被复制到堆上了。<br/>
+那么这里 <code>++val</code> 操作如何是的是对堆上的 <code>__block_byref_val_0</code> 进行操作，从而获得正确的输出呢？<br/>
+我们继续来 clang 查看代码</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>__Block_byref_val_0 val = {(void*)0,(__Block_byref_val_0 *)&val, 0, sizeof(__Block_byref_val_0), 3};
+</span><span class='line'>void (*blk)(void) = &__main_block_impl_0(__main_block_func_0, &__main_block_desc_0_DATA, &val, 570425344));
+</span><span class='line'>
+</span><span class='line'>// 1
+</span><span class='line'>++(val.__forwarding-&gt;val);
+</span><span class='line'>
+</span><span class='line'>blk-&gt;impl.FuncPtr(blk);</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>val 通过访问 <strong>forwarding 指针指向的 val 来访问堆上的对象。所以这里 <code>__forwarding</code> 指向的就是被复制到堆上的 <code>__Block_byref_val_0</code> 对象。<code>__forwarding</code> 的作用的就是让 </strong>block 修饰的变量不管在栈上还是在堆上都可以被正确的访问。</li>
+</ol>
+
+
+<p>为了进一步验证我们的猜想，在前边我们提到 <code>__Block_byref_val_0</code> 被复制到堆上时执行了 <code>_Block_byref_assign_copy</code> 这个函数，我们直接去看看源码的实现。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>static void _Block_byref_assign_copy(void *dest, const void *arg, const int flags) {
+</span><span class='line'>    struct Block_byref **destp = (struct Block_byref **)dest;
+</span><span class='line'>    struct Block_byref *src = (struct Block_byref *)arg;
+</span><span class='line'>
+</span><span class='line'>    ...
+</span><span class='line'>    if ((src-&gt;forwarding-&gt;flags & BLOCK_REFCOUNT_MASK) == 0) {
+</span><span class='line'>
+</span><span class='line'>        bool isWeak = ((flags & (BLOCK_FIELD_IS_BYREF|BLOCK_FIELD_IS_WEAK)) == (BLOCK_FIELD_IS_BYREF|BLOCK_FIELD_IS_WEAK));
+</span><span class='line'>        struct Block_byref *copy = (struct Block_byref *)_Block_allocator(src-&gt;size, false, isWeak);
+</span><span class='line'>        copy-&gt;flags = src-&gt;flags | _Byref_flag_initial_value; // non-GC one for caller, one for stack
+</span><span class='line'>        copy-&gt;forwarding = copy; // patch heap copy to point to itself (skip write-barrier)
+</span><span class='line'>        // 1
+</span><span class='line'>        src-&gt;forwarding = copy;  // patch stack to point to heap copy
+</span><span class='line'>        copy-&gt;size = src-&gt;size;
+</span><span class='line'>    }
+</span><span class='line'>    ...
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>就是这关键的一步把 <code>src-&gt;forwarding</code> 指向了在堆上新创建的对象。</li>
+</ol>
+
+
+<p>至此我们基本明白 block 的实现原理, 我们最后总结一下：</p>
+
+<ol>
+<li>block 会被编译成 C 的结构体，自动变量和函数会作为该结构的成员变量而被捕获。</li>
+<li>block 和 block 变量对象 在编译器的帮助下通过 copy 和 release，来合理的管理生命周期，使得在作用域外也可以被正确的访问。</li>
+</ol>
+
+
+<h3>参考链接</h3>
+
+<p><a href="https://zh.wikipedia.org/wiki/%E9%97%AD%E5%8C%85_(%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6">维基百科闭包</a><br/>
+<a href="http://llvm.org/svn/llvm-project/compiler-rt/trunk/lib/BlocksRuntime/runtime.c">block 源码</a><br/>
+<a href="http://www.galloway.me.uk/2013/05/a-look-inside-blocks-episode-3-block-copy/">A look inside blocks: Episode 3 </a></p>
 ]]></content>
   </entry>
   
