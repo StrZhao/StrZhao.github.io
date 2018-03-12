@@ -4,7 +4,7 @@
   <title><![CDATA[StrZ 的博客]]></title>
   <link href="http://strzhao.github.io/atom.xml" rel="self"/>
   <link href="http://strzhao.github.io/"/>
-  <updated>2018-03-13T04:37:27+08:00</updated>
+  <updated>2018-03-13T04:40:51+08:00</updated>
   <id>http://strzhao.github.io/</id>
   <author>
     <name><![CDATA[Sring Zhao]]></name>
@@ -789,12 +789,12 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <ol>
 <li><code>__main_block_desc_0</code> 也是通过编译器自动生成，内部都回统一调用到 <code>_block_object_assign</code> 函数。</li>
 <li>这里最后一个参数传入了 8，参数的含义是编译器用来告诉 <code>_block_object_assign</code> 捕获的对象是什么类型的。含义如下：<br/>
-BLOCK_FIELD_IS_OBJECT (3)， OC 对象<br/>
-BLOCK_FIELD_IS_BLOCK (7)， 其它的 block<br/>
-BLOCK_FIELD_IS_BYREF (8)，<strong>block 修饰的变量<br/>
-如果 BLOCK_FIELD_IS_BYREF 还是 </strong>weak 修饰的还要加上 BLOCK_FIELD_IS_WEAK (16)<br/>
-所以这里的 8 就是就代表 BLOCK_FIELD_IS_BYREF，就是我们之前定义的 <code>__block int val</code></li>
-<li>如何设置了 BLOCK_BYREF_CALLER，那么简单的赋值复制就好，不需要 copy 了。</li>
+<code>BLOCK_FIELD_IS_OBJECT (3)</code>， OC 对象<br/>
+<code>BLOCK_FIELD_IS_BLOCK (7)</code>， 其它的 block<br/>
+<code>BLOCK_FIELD_IS_BYREF (8)</code>，__block 修饰的变量<br/>
+如果 <code>BLOCK_FIELD_IS_BYREF</code> 还是 <code>__weak</code> 修饰的还要加上 <code>BLOCK_FIELD_IS_WEAK (16)</code><br/>
+所以这里的 8 就是就代表 <code>BLOCK_FIELD_IS_BYREF</code>，就是我们之前定义的 <code>__block int val</code></li>
+<li>如何设置了 <code>BLOCK_BYREF_CALLER</code>，那么简单的赋值复制就好，不需要 copy 了。</li>
 <li>如果捕获对象的类型是 __block 修饰的变量, 那么把栈上的 <code>__block_byref_val_0</code> 对象复制到堆上。</li>
 <li>如果捕获对象是 block，那么通过 <code>_Block_copy_internal</code> 把对象从栈上复制到堆上</li>
 <li>如果捕获对象是 OC 对象，那么就引用计数加 1 即可。(这也是 block 循环引用发生的充分条件)</li>
@@ -840,7 +840,7 @@ BLOCK_FIELD_IS_BYREF (8)，<strong>block 修饰的变量<br/>
 
 
 <ol>
-<li>val 通过访问 <strong>forwarding 指针指向的 val 来访问堆上的对象。所以这里 <code>__forwarding</code> 指向的就是被复制到堆上的 <code>__Block_byref_val_0</code> 对象。<code>__forwarding</code> 的作用的就是让 </strong>block 修饰的变量不管在栈上还是在堆上都可以被正确的访问。</li>
+<li>val 通过访问 <code>__forwarding</code> 指针指向的 val 来访问堆上的对象。所以这里 <code>__forwarding</code> 指向的就是被复制到堆上的 <code>__Block_byref_val_0</code> 对象。<code>__forwarding</code> 的作用的就是让 __block 修饰的变量不管在栈上还是在堆上都可以被正确的访问。</li>
 </ol>
 
 
