@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[StrZ 的博客]]></title>
+  <title><![CDATA[我的愚与渔]]></title>
   <link href="http://strzhao.github.io/atom.xml" rel="self"/>
   <link href="http://strzhao.github.io/"/>
-  <updated>2018-03-13T23:39:42+08:00</updated>
+  <updated>2018-03-14T00:44:45+08:00</updated>
   <id>http://strzhao.github.io/</id>
   <author>
     <name><![CDATA[Sring Zhao]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[谈谈 Objective-C Block 的实现]]></title>
+    <title type="html"><![CDATA[谈谈 Objective-C block 的实现]]></title>
     <link href="http://strzhao.github.io/blog/2018/03/11/block-liao-jie-%5B%3F%5D-xia/"/>
     <updated>2018-03-11T12:13:52+08:00</updated>
     <id>http://strzhao.github.io/blog/2018/03/11/block-liao-jie-[?]-xia</id>
