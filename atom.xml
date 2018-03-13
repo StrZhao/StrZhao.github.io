@@ -4,7 +4,7 @@
   <title><![CDATA[我的愚与渔]]></title>
   <link href="http://strzhao.github.io/atom.xml" rel="self"/>
   <link href="http://strzhao.github.io/"/>
-  <updated>2018-03-14T00:44:45+08:00</updated>
+  <updated>2018-03-14T00:49:47+08:00</updated>
   <id>http://strzhao.github.io/</id>
   <author>
     <name><![CDATA[Sring Zhao]]></name>
@@ -47,29 +47,31 @@ C 语言的 block 实现也确实是这样的思路，而其中定义数据结�
 
 <p>我们新建一个 main.c, 其中代码如下:</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>int main(int argc, const char * argv[]) {
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
 </span><span class='line'>
-</span><span class='line'>    void (^blk)(void) = ^{printf("Hello, World!\n");};
-</span><span class='line'>    blk();
-</span><span class='line'>    return 0;
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+</span><span class='line'>    <span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="n">blk</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Hello, World!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);};</span>
+</span><span class='line'>    <span class="n">blk</span><span class="p">();</span>
+</span><span class='line'>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <p>然后我们执行下边命令，clang 可以把带有 block 的源代码转换成 C++ 的代码。</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>clang -rewrite-objc main.c</span></code></pre></td></tr></table></div></figure>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="n">clang</span> <span class="o">-</span><span class="n">rewrite</span><span class="o">-</span><span class="n">objc</span> <span class="n">main</span><span class="p">.</span><span class="n">c</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <p>转换后的代码核心部分如下：(同时把类型转换也去掉)</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -100,42 +102,43 @@ C 语言的 block 实现也确实是这样的思路，而其中定义数据结�
 <span class='line-number'>29</span>
 <span class='line-number'>30</span>
 <span class='line-number'>31</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>struct __block_impl {
-</span><span class='line'>  void *isa;
-</span><span class='line'>  int Flags;
-</span><span class='line'>  int Reserved;
-</span><span class='line'>  void *FuncPtr;
-</span><span class='line'>};
-</span><span class='line'>struct __main_block_impl_0 {
-</span><span class='line'>  struct __block_impl impl;
-</span><span class='line'>  struct __main_block_desc_0* Desc;
-</span><span class='line'>  __main_block_impl_0(void *fp, struct __main_block_desc_0 *desc, int flags=0) {
-</span><span class='line'>    impl.isa = &_NSConcreteStackblock;
-</span><span class='line'>    impl.Flags = flags;
-</span><span class='line'>    impl.FuncPtr = fp;
-</span><span class='line'>    Desc = desc;
-</span><span class='line'>  }
-</span><span class='line'>};
-</span><span class='line'>static void __main_block_func_0(struct __main_block_impl_0 *__cself) {
-</span><span class='line'>    printf("Hello, World!\n");
-</span><span class='line'>}
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">struct</span> <span class="n">__block_impl</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kt">void</span> <span class="o">*</span><span class="n">isa</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">int</span> <span class="n">Flags</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">int</span> <span class="n">Reserved</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">void</span> <span class="o">*</span><span class="n">FuncPtr</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="k">struct</span> <span class="n">__main_block_impl_0</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">struct</span> <span class="n">__block_impl</span> <span class="n">impl</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">struct</span> <span class="n">__main_block_desc_0</span><span class="o">*</span> <span class="n">Desc</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">__main_block_impl_0</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">fp</span><span class="p">,</span> <span class="k">struct</span> <span class="n">__main_block_desc_0</span> <span class="o">*</span><span class="n">desc</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">impl</span><span class="p">.</span><span class="n">isa</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">_NSConcreteStackblock</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">impl</span><span class="p">.</span><span class="n">Flags</span> <span class="o">=</span> <span class="n">flags</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">impl</span><span class="p">.</span><span class="n">FuncPtr</span> <span class="o">=</span> <span class="n">fp</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">Desc</span> <span class="o">=</span> <span class="n">desc</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="k">static</span> <span class="kt">void</span> <span class="nf">__main_block_func_0</span><span class="p">(</span><span class="k">struct</span> <span class="n">__main_block_impl_0</span> <span class="o">*</span><span class="n">__cself</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Hello, World!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
 </span><span class='line'>
-</span><span class='line'>static struct __main_block_desc_0 {
-</span><span class='line'>  size_t reserved;
-</span><span class='line'>  size_t block_size;
-</span><span class='line'>} __main_block_desc_0_DATA = { 0, sizeof(struct __main_block_impl_0)};
+</span><span class='line'><span class="k">static</span> <span class="k">struct</span> <span class="n">__main_block_desc_0</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kt">size_t</span> <span class="n">reserved</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">size_t</span> <span class="n">block_size</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span> <span class="n">__main_block_desc_0_DATA</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">__main_block_impl_0</span><span class="p">)};</span>
 </span><span class='line'>
-</span><span class='line'>int main(int argc, const char * argv[]) {
+</span><span class='line'><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
 </span><span class='line'>
-</span><span class='line'>    void (*blk)(void) = &__main_block_impl_0(__main_block_func_0, &__main_block_desc_0_DATA);
-</span><span class='line'>    blk-&gt;impl.FuncPtr(blk);
-</span><span class='line'>    return 0;
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+</span><span class='line'>    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">blk</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">__main_block_impl_0</span><span class="p">(</span><span class="n">__main_block_func_0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">__main_block_desc_0_DATA</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">blk</span><span class="o">-&gt;</span><span class="n">impl</span><span class="p">.</span><span class="n">FuncPtr</span><span class="p">(</span><span class="n">blk</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <p>可以看到 block 通过在编译后就是普通的 C++ 代码了，围绕之前的核心要点我们逐个来分析下，首先是数据结构部分 <code>__main_block_impl_0</code>，我们把结构体拍扁，然后去掉构造函数。</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -147,18 +150,19 @@ C 语言的 block 实现也确实是这样的思路，而其中定义数据结�
 <span class='line-number'>10</span>
 <span class='line-number'>11</span>
 <span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>struct __main_block_impl_0 {
-</span><span class='line'>    void *isa;  // 用于实现 block 对象的功能
-</span><span class='line'>    int Flags;  // 后边说明
-</span><span class='line'>    int Reserved; // 保留字段
-</span><span class='line'>    void *FuncPtr; // 函数指针 在构造时会对应到定义好的匿名函数
-</span><span class='line'>    struct __main_block_desc_0* Desc; // 后边说明用途
-</span><span class='line'>}
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">struct</span> <span class="n">__main_block_impl_0</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kt">void</span> <span class="o">*</span><span class="n">isa</span><span class="p">;</span>  <span class="c1">// 用于实现 block 对象的功能</span>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">Flags</span><span class="p">;</span>  <span class="c1">// 后边说明</span>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">Reserved</span><span class="p">;</span> <span class="c1">// 保留字段</span>
+</span><span class='line'>    <span class="kt">void</span> <span class="o">*</span><span class="n">FuncPtr</span><span class="p">;</span> <span class="c1">// 函数指针 在构造时会对应到定义好的匿名函数</span>
+</span><span class='line'>    <span class="k">struct</span> <span class="n">__main_block_desc_0</span><span class="o">*</span> <span class="n">Desc</span><span class="p">;</span> <span class="c1">// 后边说明用途</span>
+</span><span class='line'><span class="p">}</span>
 </span><span class='line'>
-</span><span class='line'>struct __main_block_desc_0 {
-</span><span class='line'>  size_t reserved;  // 保留字段
-</span><span class='line'>  size_t block_size; // block 的大小 用于 malloc 
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+</span><span class='line'><span class="k">struct</span> <span class="n">__main_block_desc_0</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kt">size_t</span> <span class="n">reserved</span><span class="p">;</span>  <span class="c1">// 保留字段</span>
+</span><span class='line'>  <span class="kt">size_t</span> <span class="n">block_size</span><span class="p">;</span> <span class="c1">// block 的大小 用于 malloc </span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <ol>
@@ -173,52 +177,57 @@ C 语言的 block 实现也确实是这样的思路，而其中定义数据结�
 
 <p>明白了结构体，我们继续来看函数指针 <code>__block_impl</code> 指向的函数</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>static void __main_block_func_0(struct __main_block_impl_0 *__cself) {
-</span><span class='line'>    printf("Hello, World!\n");
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">static</span> <span class="kt">void</span> <span class="nf">__main_block_func_0</span><span class="p">(</span><span class="k">struct</span> <span class="n">__main_block_impl_0</span> <span class="o">*</span><span class="n">__cself</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Hello, World!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <p>对应的就是之前 block 的表达式部分。<br/>
 编译器把一个表达式根据它所属的类以及在类中出现的顺序在编译成一个普通的 C 函数, 而 block 对象持有了这个函数的函数指针，此时 block 就已经可以调用了。<br/>
 而其中的参数 <code>struct __main_block_impl_0 *__cself</code> 非常有意思，因为他很好的体现了编译器是如何处理 Objective-C 的 OC 方法的，我们来看一个普通的 OC 方法：</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>- (void)method:(int)arg {
-</span><span class='line'>    NSLog(@"%@ %d", self, arg);
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="o">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nl">method</span><span class="p">:(</span><span class="kt">int</span><span class="p">)</span><span class="n">arg</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s">&quot;%@ %d&quot;</span><span class="p">,</span> <span class="n">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <p>在编译成 C++ 后大概为这样：</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>void _I_Object_method(struct Object *self, SEL _cmd, int arg) {
-</span><span class='line'>    NSLog(@"%@ %d", self, arg);   
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">void</span> <span class="nf">_I_Object_method</span><span class="p">(</span><span class="k">struct</span> <span class="n">Object</span> <span class="o">*</span><span class="n">self</span><span class="p">,</span> <span class="n">SEL</span> <span class="n">_cmd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s">&quot;%@ %d&quot;</span><span class="p">,</span> <span class="n">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <p>这里的处理和 block 中对方法的处理是一模一样的。<br/>
 这也说明了为什么我们在 OC 方法中可以使用 self 指针的原因。<br/>
 额外说一点编译器怎么处理 OC 往一个对象发送消息。</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>[obj method:1] // 会被编译成下边的形式
-</span><span class='line'>objc_msgSend(obj, sel_resigtName("method:"), 1); // 这里的 obj 就是传到函数中的 self 指针。</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="p">[</span><span class="n">obj</span> <span class="nl">method</span><span class="p">:</span><span class="mi">1</span><span class="p">]</span> <span class="c1">// 会被编译成下边的形式</span>
+</span><span class='line'><span class="n">objc_msgSend</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">sel_resigtName</span><span class="p">(</span><span class="s">&quot;method:&quot;</span><span class="p">),</span> <span class="mi">1</span><span class="p">);</span> <span class="c1">// 这里的 obj 就是传到函数中的 self 指针。</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <p>因为例子中没有使用外部的变量，所有我们暂时先略过自动变量的实现问题，最后我们来看看 block 的使用。</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>void (*blk)(void) = &__main_block_impl_0(__main_block_func_0, &__main_block_desc_0_DATA); \\ void (^blk)(void) = ^{printf("Hello, World!\n");};    
-</span><span class='line'>blk-&gt;impl.FuncPtr(blk); \\ blk();</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">blk</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">__main_block_impl_0</span><span class="p">(</span><span class="n">__main_block_func_0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">__main_block_desc_0_DATA</span><span class="p">);</span> <span class="err">\\</span> <span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="n">blk</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Hello, World!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);};</span>
+</span><span class='line'><span class="n">blk</span><span class="o">-&gt;</span><span class="n">impl</span><span class="p">.</span><span class="n">FuncPtr</span><span class="p">(</span><span class="n">blk</span><span class="p">);</span> <span class="err">\\</span> <span class="n">blk</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <p>这里的 block 就是在<em>栈</em>上构造的 <code>__main_block_impl_0</code> 结构体，其中参数为 <code>__main_block_func_0</code> 函数指针和 <code>__main_block_desc_0_DATA</code> 静态的结构体指针。</p>
@@ -239,25 +248,26 @@ C 语言的 block 实现也确实是这样的思路，而其中定义数据结�
 C 函数中可能用到的变量有很多，其中全局静态变量和全局变量显然直接使用就好了，不需要特别处理。
 我们重点来看看无法直接使用的，先从栈上的基本类型变量开始，继续使用 clang 编译下边的代码。</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>int main(int argc, const char * argv[]) {
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
 </span><span class='line'>
-</span><span class='line'>    int val = 3;
-</span><span class='line'>    void (^blk)(void) = ^{printf("Hello, World! val = %d", val);};
-</span><span class='line'>    blk();
-</span><span class='line'>    return 0;
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">val</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+</span><span class='line'>    <span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="n">blk</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Hello, World! val = %d&quot;</span><span class="p">,</span> <span class="n">val</span><span class="p">);};</span>
+</span><span class='line'>    <span class="n">blk</span><span class="p">();</span>
+</span><span class='line'>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <p>删掉无关代码我们得到以下代码</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -281,30 +291,31 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <span class='line-number'>22</span>
 <span class='line-number'>23</span>
 <span class='line-number'>24</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>struct __main_block_impl_0 {
-</span><span class='line'>  struct __block_impl impl;
-</span><span class='line'>  struct __main_block_desc_0* Desc;
-</span><span class='line'>  int val;
-</span><span class='line'>  __main_block_impl_0(void *fp, struct __main_block_desc_0 *desc, int _val, int flags=0) : val(_val) {
-</span><span class='line'>    impl.isa = &_NSConcreteStackblock;
-</span><span class='line'>    impl.Flags = flags;
-</span><span class='line'>    impl.FuncPtr = fp;
-</span><span class='line'>    Desc = desc;
-</span><span class='line'>  }
-</span><span class='line'>};
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">struct</span> <span class="n">__main_block_impl_0</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">struct</span> <span class="n">__block_impl</span> <span class="n">impl</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">struct</span> <span class="n">__main_block_desc_0</span><span class="o">*</span> <span class="n">Desc</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">int</span> <span class="n">val</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">__main_block_impl_0</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">fp</span><span class="p">,</span> <span class="k">struct</span> <span class="n">__main_block_desc_0</span> <span class="o">*</span><span class="n">desc</span><span class="p">,</span> <span class="kt">int</span> <span class="n">_val</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">:</span> <span class="n">val</span><span class="p">(</span><span class="n">_val</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">impl</span><span class="p">.</span><span class="n">isa</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">_NSConcreteStackblock</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">impl</span><span class="p">.</span><span class="n">Flags</span> <span class="o">=</span> <span class="n">flags</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">impl</span><span class="p">.</span><span class="n">FuncPtr</span> <span class="o">=</span> <span class="n">fp</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">Desc</span> <span class="o">=</span> <span class="n">desc</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">};</span>
 </span><span class='line'>
-</span><span class='line'>static void __main_block_func_0(struct __main_block_impl_0 *__cself) {
-</span><span class='line'>    int val = __cself-&gt;val; // bound by copy
-</span><span class='line'>    printf("Hello, World! val = %d", val);
-</span><span class='line'>}
+</span><span class='line'><span class="k">static</span> <span class="kt">void</span> <span class="nf">__main_block_func_0</span><span class="p">(</span><span class="k">struct</span> <span class="n">__main_block_impl_0</span> <span class="o">*</span><span class="n">__cself</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">val</span> <span class="o">=</span> <span class="n">__cself</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">;</span> <span class="c1">// bound by copy</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Hello, World! val = %d&quot;</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
 </span><span class='line'>
-</span><span class='line'>int main(int argc, const char * argv[]) {
+</span><span class='line'><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
 </span><span class='line'>
-</span><span class='line'>    int val = 3;
-</span><span class='line'>    void (*blk)(void) = &__main_block_impl_0((void *)__main_block_func_0, &__main_block_desc_0_DATA, val);
-</span><span class='line'>    blk-&gt;impl.FuncPtr(blk);
-</span><span class='line'>    return 0;
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">val</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+</span><span class='line'>    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">blk</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">__main_block_impl_0</span><span class="p">((</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="n">__main_block_func_0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">__main_block_desc_0_DATA</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">blk</span><span class="o">-&gt;</span><span class="n">impl</span><span class="p">.</span><span class="n">FuncPtr</span><span class="p">(</span><span class="n">blk</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <ol>
@@ -320,25 +331,26 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <p>我们可以先试着猜测一下 <code>__block</code> 修饰符会做什么，先前 block 通过构造结构体捕获了匿名函数和变量，达到可以随意使用匿名函数和变量的目的，现在会怎么做？<br/>
 想好了，那我们继续来看 <code>__block</code> 修饰符都做了什么。</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>int main(int argc, const char * argv[]) {
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
 </span><span class='line'>
-</span><span class='line'>    __block int val = 3;
-</span><span class='line'>    void (^blk)(void) = ^{printf("Hello, World! val = %d", val);};
-</span><span class='line'>    blk();
-</span><span class='line'>    return 0;
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+</span><span class='line'>    <span class="n">__block</span> <span class="kt">int</span> <span class="n">val</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+</span><span class='line'>    <span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="n">blk</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Hello, World! val = %d&quot;</span><span class="p">,</span> <span class="n">val</span><span class="p">);};</span>
+</span><span class='line'>    <span class="n">blk</span><span class="p">();</span>
+</span><span class='line'>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <p>得到以下代码</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -384,52 +396,53 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <span class='line-number'>44</span>
 <span class='line-number'>45</span>
 <span class='line-number'>46</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>struct __block_byref_val_0 {
-</span><span class='line'>  void *__isa;
-</span><span class='line'>  __block_byref_val_0 *__forwarding;
-</span><span class='line'>  int __flags;
-</span><span class='line'>  int __size;
-</span><span class='line'>  int val;
-</span><span class='line'>};
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">struct</span> <span class="n">__block_byref_val_0</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kt">void</span> <span class="o">*</span><span class="n">__isa</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">__block_byref_val_0</span> <span class="o">*</span><span class="n">__forwarding</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">int</span> <span class="n">__flags</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">int</span> <span class="n">__size</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">int</span> <span class="n">val</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
 </span><span class='line'>
-</span><span class='line'>struct __main_block_impl_0 {
-</span><span class='line'>  struct __block_impl impl;
-</span><span class='line'>  struct __main_block_desc_0* Desc;
-</span><span class='line'>  __block_byref_val_0 *val; // by ref
-</span><span class='line'>  __main_block_impl_0(void *fp, struct __main_block_desc_0 *desc, __block_byref_val_0 *_val, int flags=0) : val(_val-&gt;__forwarding) {
-</span><span class='line'>    impl.isa = &_NSConcreteStackblock;
-</span><span class='line'>    impl.Flags = flags;
-</span><span class='line'>    impl.FuncPtr = fp;
-</span><span class='line'>    Desc = desc;
-</span><span class='line'>  }
-</span><span class='line'>};
+</span><span class='line'><span class="k">struct</span> <span class="n">__main_block_impl_0</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">struct</span> <span class="n">__block_impl</span> <span class="n">impl</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">struct</span> <span class="n">__main_block_desc_0</span><span class="o">*</span> <span class="n">Desc</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">__block_byref_val_0</span> <span class="o">*</span><span class="n">val</span><span class="p">;</span> <span class="c1">// by ref</span>
+</span><span class='line'>  <span class="n">__main_block_impl_0</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">fp</span><span class="p">,</span> <span class="k">struct</span> <span class="n">__main_block_desc_0</span> <span class="o">*</span><span class="n">desc</span><span class="p">,</span> <span class="n">__block_byref_val_0</span> <span class="o">*</span><span class="n">_val</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">:</span> <span class="n">val</span><span class="p">(</span><span class="n">_val</span><span class="o">-&gt;</span><span class="n">__forwarding</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">impl</span><span class="p">.</span><span class="n">isa</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">_NSConcreteStackblock</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">impl</span><span class="p">.</span><span class="n">Flags</span> <span class="o">=</span> <span class="n">flags</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">impl</span><span class="p">.</span><span class="n">FuncPtr</span> <span class="o">=</span> <span class="n">fp</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">Desc</span> <span class="o">=</span> <span class="n">desc</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">};</span>
 </span><span class='line'>
-</span><span class='line'>static void __main_block_func_0(struct __main_block_impl_0 *__cself) {
-</span><span class='line'>  __block_byref_val_0 *val = __cself-&gt;val; // bound by ref
-</span><span class='line'>  printf("Hello, World! val = %d", (val-&gt;__forwarding-&gt;val));
-</span><span class='line'>}
-</span><span class='line'>static void __main_block_copy_0(struct __main_block_impl_0*dst, struct __main_block_impl_0*src) {
-</span><span class='line'>    _block_object_assign((void*)&dst-&gt;val, (void*)src-&gt;val, 8);
-</span><span class='line'>}
+</span><span class='line'><span class="k">static</span> <span class="kt">void</span> <span class="nf">__main_block_func_0</span><span class="p">(</span><span class="k">struct</span> <span class="n">__main_block_impl_0</span> <span class="o">*</span><span class="n">__cself</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">__block_byref_val_0</span> <span class="o">*</span><span class="n">val</span> <span class="o">=</span> <span class="n">__cself</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">;</span> <span class="c1">// bound by ref</span>
+</span><span class='line'>  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Hello, World! val = %d&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">val</span><span class="o">-&gt;</span><span class="n">__forwarding</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">));</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="k">static</span> <span class="kt">void</span> <span class="nf">__main_block_copy_0</span><span class="p">(</span><span class="k">struct</span> <span class="n">__main_block_impl_0</span><span class="o">*</span><span class="n">dst</span><span class="p">,</span> <span class="k">struct</span> <span class="n">__main_block_impl_0</span><span class="o">*</span><span class="n">src</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">_block_object_assign</span><span class="p">((</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">dst</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">src</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">,</span> <span class="mi">8</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
 </span><span class='line'>
-</span><span class='line'>static void __main_block_dispose_0(struct __main_block_impl_0*src) {
-</span><span class='line'>    _block_object_dispose((void*)src-&gt;val, 8);
-</span><span class='line'>}
+</span><span class='line'><span class="k">static</span> <span class="kt">void</span> <span class="nf">__main_block_dispose_0</span><span class="p">(</span><span class="k">struct</span> <span class="n">__main_block_impl_0</span><span class="o">*</span><span class="n">src</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">_block_object_dispose</span><span class="p">((</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">src</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">,</span> <span class="mi">8</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
 </span><span class='line'>
-</span><span class='line'>static struct __main_block_desc_0 {
-</span><span class='line'>  size_t reserved;
-</span><span class='line'>  size_t block_size;
-</span><span class='line'>  void (*copy)(struct __main_block_impl_0*, struct __main_block_impl_0*);
-</span><span class='line'>  void (*dispose)(struct __main_block_impl_0*);
-</span><span class='line'>} __main_block_desc_0_DATA = { 0, sizeof(struct __main_block_impl_0), __main_block_copy_0, __main_block_dispose_0};
+</span><span class='line'><span class="k">static</span> <span class="k">struct</span> <span class="n">__main_block_desc_0</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kt">size_t</span> <span class="n">reserved</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">size_t</span> <span class="n">block_size</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">copy</span><span class="p">)(</span><span class="k">struct</span> <span class="n">__main_block_impl_0</span><span class="o">*</span><span class="p">,</span> <span class="k">struct</span> <span class="n">__main_block_impl_0</span><span class="o">*</span><span class="p">);</span>
+</span><span class='line'>  <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">dispose</span><span class="p">)(</span><span class="k">struct</span> <span class="n">__main_block_impl_0</span><span class="o">*</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span> <span class="n">__main_block_desc_0_DATA</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">__main_block_impl_0</span><span class="p">),</span> <span class="n">__main_block_copy_0</span><span class="p">,</span> <span class="n">__main_block_dispose_0</span><span class="p">};</span>
 </span><span class='line'>
-</span><span class='line'>int main(int argc, const char * argv[]) {
+</span><span class='line'><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
 </span><span class='line'>
-</span><span class='line'>    __block_byref_val_0 val = {(void*)0,(__block_byref_val_0 *)&val, 0, sizeof(__block_byref_val_0), 3};
-</span><span class='line'>    void (*blk)(void) = &__main_block_impl_0((void *)__main_block_func_0, &__main_block_desc_0_DATA, (__block_byref_val_0 *)&val, 570425344);
-</span><span class='line'>    blk-&gt;impl.FuncPtr(blk);
-</span><span class='line'>    return 0;
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+</span><span class='line'>    <span class="n">__block_byref_val_0</span> <span class="n">val</span> <span class="o">=</span> <span class="p">{(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="mi">0</span><span class="p">,(</span><span class="n">__block_byref_val_0</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">val</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">__block_byref_val_0</span><span class="p">),</span> <span class="mi">3</span><span class="p">};</span>
+</span><span class='line'>    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">blk</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">__main_block_impl_0</span><span class="p">((</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="n">__main_block_func_0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">__main_block_desc_0_DATA</span><span class="p">,</span> <span class="p">(</span><span class="n">__block_byref_val_0</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">val</span><span class="p">,</span> <span class="mi">570425344</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">blk</span><span class="o">-&gt;</span><span class="n">impl</span><span class="p">.</span><span class="n">FuncPtr</span><span class="p">(</span><span class="n">blk</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <ol>
@@ -460,7 +473,7 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <p>那么现在可以回答来在栈上构造的 block 对象是如何超出作用域而存在的问题了<br/>
 我们通过看 block 作为函数返回的代码来理解这个过程:</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -476,22 +489,23 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <span class='line-number'>14</span>
 <span class='line-number'>15</span>
 <span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>float ^(float x) doubel(float x) {
-</span><span class='line'>    return ^(float x) {
-</span><span class='line'>        return x * 2;
-</span><span class='line'>    };
-</span><span class='line'>}
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">float</span> <span class="o">^</span><span class="p">(</span><span class="kt">float</span> <span class="n">x</span><span class="p">)</span> <span class="n">doubel</span><span class="p">(</span><span class="kt">float</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="o">^</span><span class="p">(</span><span class="kt">float</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
 </span><span class='line'>
-</span><span class='line'>// 编译后
+</span><span class='line'><span class="c1">// 编译后</span>
 </span><span class='line'>
-</span><span class='line'>float ^(float x) doubel(float x) {
+</span><span class='line'><span class="kt">float</span> <span class="o">^</span><span class="p">(</span><span class="kt">float</span> <span class="n">x</span><span class="p">)</span> <span class="n">doubel</span><span class="p">(</span><span class="kt">float</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span>
 </span><span class='line'>
-</span><span class='line'>    blk tmp = &__func_block_impl_0(__func_block_func_0, &__func_block_desc_0_DATA, x);
+</span><span class='line'>    <span class="n">blk</span> <span class="n">tmp</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">__func_block_impl_0</span><span class="p">(</span><span class="n">__func_block_func_0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">__func_block_desc_0_DATA</span><span class="p">,</span> <span class="n">x</span><span class="p">);</span>
 </span><span class='line'>
-</span><span class='line'>    tmp = objc_retainBlock(tmp); // 从栈上复制到堆上
+</span><span class='line'>    <span class="n">tmp</span> <span class="o">=</span> <span class="n">objc_retainBlock</span><span class="p">(</span><span class="n">tmp</span><span class="p">);</span> <span class="c1">// 从栈上复制到堆上</span>
 </span><span class='line'>
-</span><span class='line'>    return objc_autoreleaseReturnValue(tmp); // 加到 autoreleasepool 中
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+</span><span class='line'>    <span class="k">return</span> <span class="nf">objc_autoreleaseReturnValue</span><span class="p">(</span><span class="n">tmp</span><span class="p">);</span> <span class="c1">// 加到 autoreleasepool 中</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <ol>
@@ -503,7 +517,7 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <p>我们深入的来了解下 <code>objc_retainBlock</code> 如何把 block 复制到堆上的，通过 objc4 运行时库 我们可以看到 <code>objc_retainBlock</code> 实际上就是 <code>_Block_copy</code> 函数
 我们直接来看看 <code>_Block_copy</code> 的<a href="http://llvm.org/svn/llvm-project/compiler-rt/trunk/lib/BlocksRuntime/runtime.c">源码</a>实现 (代码暂时把 GC 部分都先去掉了)</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -549,52 +563,53 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <span class='line-number'>44</span>
 <span class='line-number'>45</span>
 <span class='line-number'>46</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>void *_Block_copy(const void *arg) {
-</span><span class='line'>    // 1
-</span><span class='line'>    return _Block_copy_internal(arg, WANTS_ONE);
-</span><span class='line'>}
-</span><span class='line'>static void *_Block_copy_internal(const void *arg, const int flags) {
-</span><span class='line'>    struct Block_layout *aBlock;
-</span><span class='line'>    const bool wantsOne = (WANTS_ONE & flags) == WANTS_ONE;
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">void</span> <span class="o">*</span><span class="nf">_Block_copy</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// 1</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">_Block_copy_internal</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">WANTS_ONE</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="k">static</span> <span class="kt">void</span> <span class="o">*</span><span class="nf">_Block_copy_internal</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">struct</span> <span class="n">Block_layout</span> <span class="o">*</span><span class="n">aBlock</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">const</span> <span class="kt">bool</span> <span class="n">wantsOne</span> <span class="o">=</span> <span class="p">(</span><span class="n">WANTS_ONE</span> <span class="o">&amp;</span> <span class="n">flags</span><span class="p">)</span> <span class="o">==</span> <span class="n">WANTS_ONE</span><span class="p">;</span>
 </span><span class='line'>
-</span><span class='line'>    if (!arg) return NULL;
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">arg</span><span class="p">)</span> <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
 </span><span class='line'>
-</span><span class='line'>    // 2
-</span><span class='line'>    aBlock = (struct Block_layout *)arg;
+</span><span class='line'>    <span class="c1">// 2</span>
+</span><span class='line'>    <span class="n">aBlock</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">Block_layout</span> <span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">;</span>
 </span><span class='line'>
-</span><span class='line'>    // 3
-</span><span class='line'>    if (aBlock-&gt;flags & BLOCK_NEEDS_FREE) {
-</span><span class='line'>        // latches on high
-</span><span class='line'>        latching_incr_int(&aBlock-&gt;flags);
-</span><span class='line'>        return aBlock;
-</span><span class='line'>    }
+</span><span class='line'>    <span class="c1">// 3</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">aBlock</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BLOCK_NEEDS_FREE</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="c1">// latches on high</span>
+</span><span class='line'>        <span class="n">latching_incr_int</span><span class="p">(</span><span class="o">&amp;</span><span class="n">aBlock</span><span class="o">-&gt;</span><span class="n">flags</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">aBlock</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
 </span><span class='line'>
-</span><span class='line'>    // 4
-</span><span class='line'>    else if (aBlock-&gt;flags & BLOCK_IS_GLOBAL) {
-</span><span class='line'>        return aBlock;
-</span><span class='line'>    }
+</span><span class='line'>    <span class="c1">// 4</span>
+</span><span class='line'>    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">aBlock</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BLOCK_IS_GLOBAL</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">aBlock</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
 </span><span class='line'>
-</span><span class='line'>    // 5
-</span><span class='line'>    struct Block_layout *result = malloc(aBlock-&gt;descriptor-&gt;size);
-</span><span class='line'>    if (!result) return (void *)0;
+</span><span class='line'>    <span class="c1">// 5</span>
+</span><span class='line'>    <span class="k">struct</span> <span class="n">Block_layout</span> <span class="o">*</span><span class="n">result</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">aBlock</span><span class="o">-&gt;</span><span class="n">descriptor</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">result</span><span class="p">)</span> <span class="k">return</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="mi">0</span><span class="p">;</span>
 </span><span class='line'>
-</span><span class='line'>    // 6
-</span><span class='line'>    memmove(result, aBlock, aBlock-&gt;descriptor-&gt;size); // bitcopy first
+</span><span class='line'>    <span class="c1">// 6</span>
+</span><span class='line'>    <span class="n">memmove</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">aBlock</span><span class="p">,</span> <span class="n">aBlock</span><span class="o">-&gt;</span><span class="n">descriptor</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">);</span> <span class="c1">// bitcopy first</span>
 </span><span class='line'>
-</span><span class='line'>    // 7
-</span><span class='line'>    result-&gt;flags &= ~(BLOCK_REFCOUNT_MASK);    // XXX not needed
-</span><span class='line'>    result-&gt;flags |= BLOCK_NEEDS_FREE | 1;
+</span><span class='line'>    <span class="c1">// 7</span>
+</span><span class='line'>    <span class="n">result</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="p">(</span><span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">);</span>    <span class="c1">// XXX not needed</span>
+</span><span class='line'>    <span class="n">result</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">|=</span> <span class="n">BLOCK_NEEDS_FREE</span> <span class="o">|</span> <span class="mi">1</span><span class="p">;</span>
 </span><span class='line'>
-</span><span class='line'>    // 8
-</span><span class='line'>    result-&gt;isa = _NSConcreteMallocBlock;
+</span><span class='line'>    <span class="c1">// 8</span>
+</span><span class='line'>    <span class="n">result</span><span class="o">-&gt;</span><span class="n">isa</span> <span class="o">=</span> <span class="n">_NSConcreteMallocBlock</span><span class="p">;</span>
 </span><span class='line'>
-</span><span class='line'>    // 9
-</span><span class='line'>    if (result-&gt;flags & BLOCK_HAS_COPY_DISPOSE) {
-</span><span class='line'>        (*aBlock-&gt;descriptor-&gt;copy)(result, aBlock); // do fixup
-</span><span class='line'>    }
+</span><span class='line'>    <span class="c1">// 9</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">result</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BLOCK_HAS_COPY_DISPOSE</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="p">(</span><span class="o">*</span><span class="n">aBlock</span><span class="o">-&gt;</span><span class="n">descriptor</span><span class="o">-&gt;</span><span class="n">copy</span><span class="p">)(</span><span class="n">result</span><span class="p">,</span> <span class="n">aBlock</span><span class="p">);</span> <span class="c1">// do fixup</span>
+</span><span class='line'>    <span class="p">}</span>
 </span><span class='line'>
-</span><span class='line'>    return result;
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+</span><span class='line'>    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <ol>
@@ -612,7 +627,7 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 
 <p>复制到堆上就需要自己来管理 block 的内存释放了，而这个过程是通过 <code>Block_release()</code> 来完成的，我们继续要看代码。</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -639,33 +654,33 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <span class='line-number'>25</span>
 <span class='line-number'>26</span>
 <span class='line-number'>27</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>void _Block_release(void *arg) {
-</span><span class='line'>    struct Block_layout *aBlock = (struct Block_layout *)arg;
-</span><span class='line'>    int32_t newCount;
-</span><span class='line'>    if (!aBlock) return;
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">void</span> <span class="nf">_Block_release</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">struct</span> <span class="n">Block_layout</span> <span class="o">*</span><span class="n">aBlock</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">Block_layout</span> <span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">;</span>
+</span><span class='line'>    <span class="kt">int32_t</span> <span class="n">newCount</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">aBlock</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
 </span><span class='line'>
-</span><span class='line'>    // 1
-</span><span class='line'>    newCount = latching_decr_int(&aBlock-&gt;flags) & BLOCK_REFCOUNT_MASK;
+</span><span class='line'>    <span class="c1">// 1</span>
+</span><span class='line'>    <span class="n">newCount</span> <span class="o">=</span> <span class="n">latching_decr_int</span><span class="p">(</span><span class="o">&amp;</span><span class="n">aBlock</span><span class="o">-&gt;</span><span class="n">flags</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">;</span>
 </span><span class='line'>
-</span><span class='line'>    // 2
-</span><span class='line'>    if (newCount &gt; 0) return;
+</span><span class='line'>    <span class="c1">// 2</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">newCount</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
 </span><span class='line'>
-</span><span class='line'>    // 3
-</span><span class='line'>   if (aBlock-&gt;flags & BLOCK_NEEDS_FREE) {
-</span><span class='line'>        if (aBlock-&gt;flags & BLOCK_HAS_COPY_DISPOSE)(*aBlock-&gt;descriptor-&gt;dispose)(aBlock);
-</span><span class='line'>        // 4
-</span><span class='line'>        _Block_deallocator(aBlock);
-</span><span class='line'>    }
-</span><span class='line'>    // 5
-</span><span class='line'>    else if (aBlock-&gt;flags & BLOCK_IS_GLOBAL) {
-</span><span class='line'>        ;
-</span><span class='line'>    }
-</span><span class='line'>    else {
-</span><span class='line'>        printf("Block_release called upon a stack Block: %p, ignored\n", (void *)aBlock);
-</span><span class='line'>    }
-</span><span class='line'>}
+</span><span class='line'>    <span class="c1">// 3</span>
+</span><span class='line'>   <span class="k">if</span> <span class="p">(</span><span class="n">aBlock</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BLOCK_NEEDS_FREE</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">aBlock</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BLOCK_HAS_COPY_DISPOSE</span><span class="p">)(</span><span class="o">*</span><span class="n">aBlock</span><span class="o">-&gt;</span><span class="n">descriptor</span><span class="o">-&gt;</span><span class="n">dispose</span><span class="p">)(</span><span class="n">aBlock</span><span class="p">);</span>
+</span><span class='line'>        <span class="c1">// 4</span>
+</span><span class='line'>        <span class="n">_Block_deallocator</span><span class="p">(</span><span class="n">aBlock</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="c1">// 5</span>
+</span><span class='line'>    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">aBlock</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BLOCK_IS_GLOBAL</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Block_release called upon a stack Block: %p, ignored</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="n">aBlock</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
 </span><span class='line'>
-</span><span class='line'>static void (*_Block_deallocator)(const void *) = (void (*)(const void *))free;
+</span><span class='line'><span class="k">static</span> <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">_Block_deallocator</span><span class="p">)(</span><span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="p">))</span><span class="n">free</span><span class="p">;</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
@@ -710,7 +725,7 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 
 <p>我们来看看是怎么处理的</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -747,43 +762,43 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <span class='line-number'>35</span>
 <span class='line-number'>36</span>
 <span class='line-number'>37</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>static void __main_block_copy_0(struct __main_block_impl_0*dst, struct __main_block_impl_0*src) {
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">static</span> <span class="kt">void</span> <span class="nf">__main_block_copy_0</span><span class="p">(</span><span class="k">struct</span> <span class="n">__main_block_impl_0</span><span class="o">*</span><span class="n">dst</span><span class="p">,</span> <span class="k">struct</span> <span class="n">__main_block_impl_0</span><span class="o">*</span><span class="n">src</span><span class="p">)</span> <span class="p">{</span>
 </span><span class='line'>
-</span><span class='line'>    // 1
-</span><span class='line'>    // 2
-</span><span class='line'>    _block_object_assign((void*)&dst-&gt;val, (void*)src-&gt;val, 8);
-</span><span class='line'>}
+</span><span class='line'>    <span class="c1">// 1</span>
+</span><span class='line'>    <span class="c1">// 2</span>
+</span><span class='line'>    <span class="n">_block_object_assign</span><span class="p">((</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">dst</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">src</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">,</span> <span class="mi">8</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
 </span><span class='line'>
-</span><span class='line'>void _Block_object_assign(void *destAddr, const void *object, const int flags) {
-</span><span class='line'>    // 3
-</span><span class='line'>    if ((flags & BLOCK_BYREF_CALLER) == BLOCK_BYREF_CALLER) {
-</span><span class='line'>        if ((flags & BLOCK_FIELD_IS_WEAK) == BLOCK_FIELD_IS_WEAK) {
-</span><span class='line'>            _Block_assign_weak(object, destAddr);
-</span><span class='line'>        }
-</span><span class='line'>        else {
-</span><span class='line'>            // do *not* retain or *copy* __block variables whatever they are
-</span><span class='line'>            _Block_assign((void *)object, destAddr);
-</span><span class='line'>        }
-</span><span class='line'>    }
+</span><span class='line'><span class="kt">void</span> <span class="nf">_Block_object_assign</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">destAddr</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">object</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// 3</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">((</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BLOCK_BYREF_CALLER</span><span class="p">)</span> <span class="o">==</span> <span class="n">BLOCK_BYREF_CALLER</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">((</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BLOCK_FIELD_IS_WEAK</span><span class="p">)</span> <span class="o">==</span> <span class="n">BLOCK_FIELD_IS_WEAK</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="n">_Block_assign_weak</span><span class="p">(</span><span class="n">object</span><span class="p">,</span> <span class="n">destAddr</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>            <span class="c1">// do *not* retain or *copy* __block variables whatever they are</span>
+</span><span class='line'>            <span class="n">_Block_assign</span><span class="p">((</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="n">object</span><span class="p">,</span> <span class="n">destAddr</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
 </span><span class='line'>
-</span><span class='line'>    // 4
-</span><span class='line'>    else if ((flags & BLOCK_FIELD_IS_BYREF) == BLOCK_FIELD_IS_BYREF)  {
-</span><span class='line'>        _Block_byref_assign_copy(destAddr, object, flags);
-</span><span class='line'>    }
+</span><span class='line'>    <span class="c1">// 4</span>
+</span><span class='line'>    <span class="k">else</span> <span class="k">if</span> <span class="p">((</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BLOCK_FIELD_IS_BYREF</span><span class="p">)</span> <span class="o">==</span> <span class="n">BLOCK_FIELD_IS_BYREF</span><span class="p">)</span>  <span class="p">{</span>
+</span><span class='line'>        <span class="n">_Block_byref_assign_copy</span><span class="p">(</span><span class="n">destAddr</span><span class="p">,</span> <span class="n">object</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
 </span><span class='line'>
-</span><span class='line'>    // 5
-</span><span class='line'>    else if ((flags & BLOCK_FIELD_IS_BLOCK) == BLOCK_FIELD_IS_BLOCK) {
+</span><span class='line'>    <span class="c1">// 5</span>
+</span><span class='line'>    <span class="k">else</span> <span class="k">if</span> <span class="p">((</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BLOCK_FIELD_IS_BLOCK</span><span class="p">)</span> <span class="o">==</span> <span class="n">BLOCK_FIELD_IS_BLOCK</span><span class="p">)</span> <span class="p">{</span>
 </span><span class='line'>
-</span><span class='line'>        _Block_assign(_Block_copy_internal(object, flags), destAddr);
-</span><span class='line'>    }
+</span><span class='line'>        <span class="n">_Block_assign</span><span class="p">(</span><span class="n">_Block_copy_internal</span><span class="p">(</span><span class="n">object</span><span class="p">,</span> <span class="n">flags</span><span class="p">),</span> <span class="n">destAddr</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
 </span><span class='line'>
-</span><span class='line'>    // 6
-</span><span class='line'>    else if ((flags & BLOCK_FIELD_IS_OBJECT) == BLOCK_FIELD_IS_OBJECT) {
+</span><span class='line'>    <span class="c1">// 6</span>
+</span><span class='line'>    <span class="k">else</span> <span class="k">if</span> <span class="p">((</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BLOCK_FIELD_IS_OBJECT</span><span class="p">)</span> <span class="o">==</span> <span class="n">BLOCK_FIELD_IS_OBJECT</span><span class="p">)</span> <span class="p">{</span>
 </span><span class='line'>
-</span><span class='line'>        _Block_retain_object(object);
-</span><span class='line'>        _Block_assign((void *)object, destAddr);
-</span><span class='line'>    }
-</span><span class='line'>}
+</span><span class='line'>        <span class="n">_Block_retain_object</span><span class="p">(</span><span class="n">object</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">_Block_assign</span><span class="p">((</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="n">object</span><span class="p">,</span> <span class="n">destAddr</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
@@ -810,7 +825,7 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <p>理解完 block 和 <code>__block_byref_val_0</code> 的复制操作，那么再来理解 <code>__forwarding</code> 就非常顺利了。<br/>
 我们来看一段代码</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -819,15 +834,16 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <span class='line-number'>7</span>
 <span class='line-number'>8</span>
 <span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>// 1
-</span><span class='line'>__block int val = 3;
-</span><span class='line'>// 2
-</span><span class='line'>++val;
-</span><span class='line'>// 2
-</span><span class='line'>void (^blk)(void) = ^{printf("Hello, World! val = %d", val);};
-</span><span class='line'>// 3
-</span><span class='line'>++val;
-</span><span class='line'>blk();</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="c1">// 1</span>
+</span><span class='line'><span class="n">__block</span> <span class="kt">int</span> <span class="n">val</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+</span><span class='line'><span class="c1">// 2</span>
+</span><span class='line'><span class="o">++</span><span class="n">val</span><span class="p">;</span>
+</span><span class='line'><span class="c1">// 2</span>
+</span><span class='line'><span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="n">blk</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Hello, World! val = %d&quot;</span><span class="p">,</span> <span class="n">val</span><span class="p">);};</span>
+</span><span class='line'><span class="c1">// 3</span>
+</span><span class='line'><span class="o">++</span><span class="n">val</span><span class="p">;</span>
+</span><span class='line'><span class="n">blk</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <ol>
@@ -840,7 +856,7 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 </ol>
 
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -851,17 +867,18 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <span class='line-number'>9</span>
 <span class='line-number'>10</span>
 <span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>__Block_byref_val_0 val = {(void*)0,(__Block_byref_val_0 *)&val, 0, sizeof(__Block_byref_val_0), 3};
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="n">__Block_byref_val_0</span> <span class="n">val</span> <span class="o">=</span> <span class="p">{(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="mi">0</span><span class="p">,(</span><span class="n">__Block_byref_val_0</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">val</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">__Block_byref_val_0</span><span class="p">),</span> <span class="mi">3</span><span class="p">};</span>
 </span><span class='line'>
-</span><span class='line'>// 1
-</span><span class='line'>++(val.__forwarding-&gt;val);
+</span><span class='line'><span class="c1">// 1</span>
+</span><span class='line'><span class="o">++</span><span class="p">(</span><span class="n">val</span><span class="p">.</span><span class="n">__forwarding</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">);</span>
 </span><span class='line'>
-</span><span class='line'>void (*blk)(void) = &__main_block_impl_0(__main_block_func_0, &__main_block_desc_0_DATA, &val, 570425344));
+</span><span class='line'><span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">blk</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">__main_block_impl_0</span><span class="p">(</span><span class="n">__main_block_func_0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">__main_block_desc_0_DATA</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">val</span><span class="p">,</span> <span class="mi">570425344</span><span class="p">));</span>
 </span><span class='line'>
-</span><span class='line'>// 2
-</span><span class='line'>++(val.__forwarding-&gt;val);
+</span><span class='line'><span class="c1">// 2</span>
+</span><span class='line'><span class="o">++</span><span class="p">(</span><span class="n">val</span><span class="p">.</span><span class="n">__forwarding</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">);</span>
 </span><span class='line'>
-</span><span class='line'>blk-&gt;impl.FuncPtr(blk);</span></code></pre></td></tr></table></div></figure>
+</span><span class='line'><span class="n">blk</span><span class="o">-&gt;</span><span class="n">impl</span><span class="p">.</span><span class="n">FuncPtr</span><span class="p">(</span><span class="n">blk</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <p>可以看到对 val 的访问都统一的通过 <code>__forwarding</code> 指针来访问，而 <code>__forwarding</code> 用于指向自己。
@@ -871,7 +888,7 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 
 <p>那么 <code>__forwarding</code> 的指针是什么时候改变的呢，显然应该是在 <code>__Block_byref_val_0</code> 被复制到堆上时，为了验证我们的猜想，在前边我们提到 <code>__Block_byref_val_0</code> 被复制到堆上时执行了 <code>_Block_byref_assign_copy</code> 这个函数，我们直接去看看源码的实现。</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -888,23 +905,24 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <span class='line-number'>15</span>
 <span class='line-number'>16</span>
 <span class='line-number'>17</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>static void _Block_byref_assign_copy(void *dest, const void *arg, const int flags) {
-</span><span class='line'>    struct Block_byref **destp = (struct Block_byref **)dest;
-</span><span class='line'>    struct Block_byref *src = (struct Block_byref *)arg;
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">static</span> <span class="kt">void</span> <span class="nf">_Block_byref_assign_copy</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">dest</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">struct</span> <span class="n">Block_byref</span> <span class="o">**</span><span class="n">destp</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">Block_byref</span> <span class="o">**</span><span class="p">)</span><span class="n">dest</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">struct</span> <span class="n">Block_byref</span> <span class="o">*</span><span class="n">src</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">Block_byref</span> <span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">;</span>
 </span><span class='line'>
-</span><span class='line'>    ...
-</span><span class='line'>    if ((src-&gt;forwarding-&gt;flags & BLOCK_REFCOUNT_MASK) == 0) {
+</span><span class='line'>    <span class="p">...</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">((</span><span class="n">src</span><span class="o">-&gt;</span><span class="n">forwarding</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
 </span><span class='line'>
-</span><span class='line'>        bool isWeak = ((flags & (BLOCK_FIELD_IS_BYREF|BLOCK_FIELD_IS_WEAK)) == (BLOCK_FIELD_IS_BYREF|BLOCK_FIELD_IS_WEAK));
-</span><span class='line'>        struct Block_byref *copy = (struct Block_byref *)_Block_allocator(src-&gt;size, false, isWeak);
-</span><span class='line'>        copy-&gt;flags = src-&gt;flags | _Byref_flag_initial_value; // non-GC one for caller, one for stack
-</span><span class='line'>        copy-&gt;forwarding = copy; // patch heap copy to point to itself (skip write-barrier)
-</span><span class='line'>        // 1
-</span><span class='line'>        src-&gt;forwarding = copy;  // patch stack to point to heap copy
-</span><span class='line'>        copy-&gt;size = src-&gt;size;
-</span><span class='line'>    }
-</span><span class='line'>    ...
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+</span><span class='line'>        <span class="kt">bool</span> <span class="n">isWeak</span> <span class="o">=</span> <span class="p">((</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">BLOCK_FIELD_IS_BYREF</span><span class="o">|</span><span class="n">BLOCK_FIELD_IS_WEAK</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">BLOCK_FIELD_IS_BYREF</span><span class="o">|</span><span class="n">BLOCK_FIELD_IS_WEAK</span><span class="p">));</span>
+</span><span class='line'>        <span class="k">struct</span> <span class="n">Block_byref</span> <span class="o">*</span><span class="n">copy</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">Block_byref</span> <span class="o">*</span><span class="p">)</span><span class="n">_Block_allocator</span><span class="p">(</span><span class="n">src</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">,</span> <span class="nb">false</span><span class="p">,</span> <span class="n">isWeak</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">copy</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">=</span> <span class="n">src</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">|</span> <span class="n">_Byref_flag_initial_value</span><span class="p">;</span> <span class="c1">// non-GC one for caller, one for stack</span>
+</span><span class='line'>        <span class="n">copy</span><span class="o">-&gt;</span><span class="n">forwarding</span> <span class="o">=</span> <span class="n">copy</span><span class="p">;</span> <span class="c1">// patch heap copy to point to itself (skip write-barrier)</span>
+</span><span class='line'>        <span class="c1">// 1</span>
+</span><span class='line'>        <span class="n">src</span><span class="o">-&gt;</span><span class="n">forwarding</span> <span class="o">=</span> <span class="n">copy</span><span class="p">;</span>  <span class="c1">// patch stack to point to heap copy</span>
+</span><span class='line'>        <span class="n">copy</span><span class="o">-&gt;</span><span class="n">size</span> <span class="o">=</span> <span class="n">src</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="p">...</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <ol>
