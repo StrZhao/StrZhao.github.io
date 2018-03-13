@@ -4,7 +4,7 @@
   <title><![CDATA[StrZ 的博客]]></title>
   <link href="http://strzhao.github.io/atom.xml" rel="self"/>
   <link href="http://strzhao.github.io/"/>
-  <updated>2018-03-13T04:40:51+08:00</updated>
+  <updated>2018-03-13T23:39:42+08:00</updated>
   <id>http://strzhao.github.io/</id>
   <author>
     <name><![CDATA[Sring Zhao]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[谈谈 Objective-C 的 Block 实现]]></title>
+    <title type="html"><![CDATA[谈谈 Objective-C Block 的实现]]></title>
     <link href="http://strzhao.github.io/blog/2018/03/11/block-liao-jie-%5B%3F%5D-xia/"/>
     <updated>2018-03-11T12:13:52+08:00</updated>
     <id>http://strzhao.github.io/blog/2018/03/11/block-liao-jie-[?]-xia</id>
@@ -33,16 +33,17 @@
 <h2>block 的本质</h2>
 
 <p>在开始了解 block 的实现前，我们先简单的回顾一下 block 是什么。<br/>
-block 是<a href="https://zh.wikipedia.org/wiki/%E9%97%AD%E5%8C%85_(%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6">闭包</a>在 C 语言上的实现，那么闭包是什么呢？借用 wiki 上的一句话概括：</p>
+block 是<a href="https://zh.wikipedia.org/wiki/%E9%97%AD%E5%8C%85_(%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6">闭包</a>的一种，是闭包在 C 语言上的实现。<br/>
+那么闭包是什么呢？用一句话概括：</p>
 
 <blockquote><p>带有自动变量的匿名函数</p></blockquote>
 
-<p>所以现在问题的核心就是如何在 C 上实现带有自动变量的匿名函数</p>
+<p>所以现在问题的核心就是如何在 C 上实现带有自动变量的匿名函数。</p>
 
-<blockquote><p>闭包的典型实现方式是定义一个特殊的数据结构，保存了函数地址指针与闭包创建时的函数的词法环境表示（那些非局部变量的绑定）</p></blockquote>
+<p>闭包的典型实现方式是定义一个特殊的数据结构，保存了函数地址指针与闭包创建时的函数的词法环境。
+C 语言的 block 实现也确实是这样的思路，而其中定义数据结构，保存函数指针和函数词法环境这样的脏活d都交给编译器去完成了。</p>
 
-<p>C 语言的 block 实现也确实是这样的思路，而其中定义数据结构，保存函数指针和函数词法环境这样的脏活就交给编译器去完成就好了。
-牢记这几个核心点，我们一起来看看编译器都做了什么。</p>
+<p><em>数据结构</em>，<em>函数指针</em>，<em>函数词法环境</em>，牢记这几个核心点，我们一起来看看编译器都是怎么完成这些工作的。</p>
 
 <p>我们新建一个 main.c, 其中代码如下:</p>
 
@@ -695,8 +696,8 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 
 <h4>block 引用变量的生命周期管理</h4>
 
-<p>理解完 block 的生命周期管理后，我们发现麻烦事才刚刚开始。
-在 block 复制到堆上的过程中，block 一共需要处理 4 种类型的变量，而这些处理都是通过 <code>__main_block_desc_0</code> 中的 <code>copy</code> 来处理的。<br/>
+<p>block 的生命周期管理可以很好的处理了，但我们发现麻烦事还没有结束，因为 block 还需要保证引用的变量的生命周期。
+而在 block 被复制到堆上的过程中，block 一共需要处理 4 种类型的变量，而这些处理都是通过 <code>__main_block_desc_0</code> 中的 <code>copy</code> 来处理的。<br/>
 需要处理的对象包括:</p>
 
 <ul>
@@ -793,8 +794,8 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <code>BLOCK_FIELD_IS_BLOCK (7)</code>， 其它的 block<br/>
 <code>BLOCK_FIELD_IS_BYREF (8)</code>，__block 修饰的变量<br/>
 如果 <code>BLOCK_FIELD_IS_BYREF</code> 还是 <code>__weak</code> 修饰的还要加上 <code>BLOCK_FIELD_IS_WEAK (16)</code><br/>
-所以这里的 8 就是就代表 <code>BLOCK_FIELD_IS_BYREF</code>，就是我们之前定义的 <code>__block int val</code></li>
-<li>如何设置了 <code>BLOCK_BYREF_CALLER</code>，那么简单的赋值复制就好，不需要 copy 了。</li>
+所以这里的 8 就是代表 <code>BLOCK_FIELD_IS_BYREF</code>，对应到我们之前定义的 <code>__block int val</code> 的类型。</li>
+<li>如果 flags 设置了 <code>BLOCK_BYREF_CALLER</code>，那么简单的赋值复制就好，不需要 copy 了。</li>
 <li>如果捕获对象的类型是 __block 修饰的变量, 那么把栈上的 <code>__block_byref_val_0</code> 对象复制到堆上。</li>
 <li>如果捕获对象是 block，那么通过 <code>_Block_copy_internal</code> 把对象从栈上复制到堆上</li>
 <li>如果捕获对象是 OC 对象，那么就引用计数加 1 即可。(这也是 block 循环引用发生的充分条件)</li>
@@ -813,15 +814,31 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>__block int val = 3;
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>// 1
+</span><span class='line'>__block int val = 3;
+</span><span class='line'>// 2
+</span><span class='line'>++val;
+</span><span class='line'>// 2
 </span><span class='line'>void (^blk)(void) = ^{printf("Hello, World! val = %d", val);};
+</span><span class='line'>// 3
 </span><span class='line'>++val;
 </span><span class='line'>blk();</span></code></pre></td></tr></table></div></figure>
 
 
-<p><code>void (^blk)(void)</code> 想到的于是 <code>__strong void (^blk)(void)</code>，所有这里的 block 对象在被 <code>void (^blk)(void)</code> 引用时 block 就被复制到堆上了，同时 <code>__block int val</code> 也被复制到堆上了。<br/>
-那么这里 <code>++val</code> 操作如何是的是对堆上的 <code>__block_byref_val_0</code> 进行操作，从而获得正确的输出呢？<br/>
-我们继续来 clang 查看代码</p>
+<ol>
+<li>会生成栈上的 <code>__block_byref_val_0</code> 结构体对象</li>
+<li>此时访问的是栈上的对象。</li>
+<li><code>void (^blk)(void)</code> 相当于是 <code>__strong void (^blk)(void)</code>，所以这里的 block 对象在被 <code>void (^blk)(void)</code> 引用时 block 就被复制到堆上了，同时 <code>__block_byref_val_0</code> 也被复制到堆上了。</li>
+<li>++val 操作的是堆上的对象。
+所以问题的核心就是如何可以同时访问栈上和堆上的对象进行操作，从而获得正确的输出？<br/>
+我们继续通过 clang 查看代码</li>
+</ol>
+
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -830,21 +847,29 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
 </pre></td><td class='code'><pre><code class=''><span class='line'>__Block_byref_val_0 val = {(void*)0,(__Block_byref_val_0 *)&val, 0, sizeof(__Block_byref_val_0), 3};
-</span><span class='line'>void (*blk)(void) = &__main_block_impl_0(__main_block_func_0, &__main_block_desc_0_DATA, &val, 570425344));
 </span><span class='line'>
 </span><span class='line'>// 1
+</span><span class='line'>++(val.__forwarding-&gt;val);
+</span><span class='line'>
+</span><span class='line'>void (*blk)(void) = &__main_block_impl_0(__main_block_func_0, &__main_block_desc_0_DATA, &val, 570425344));
+</span><span class='line'>
+</span><span class='line'>// 2
 </span><span class='line'>++(val.__forwarding-&gt;val);
 </span><span class='line'>
 </span><span class='line'>blk-&gt;impl.FuncPtr(blk);</span></code></pre></td></tr></table></div></figure>
 
 
-<ol>
-<li>val 通过访问 <code>__forwarding</code> 指针指向的 val 来访问堆上的对象。所以这里 <code>__forwarding</code> 指向的就是被复制到堆上的 <code>__Block_byref_val_0</code> 对象。<code>__forwarding</code> 的作用的就是让 __block 修饰的变量不管在栈上还是在堆上都可以被正确的访问。</li>
-</ol>
+<p>可以看到对 val 的访问都统一的通过 <code>__forwarding</code> 指针来访问，而 <code>__forwarding</code> 用于指向自己。
+1. 此时 <code>__forwarding</code> 指向栈上的自己。
+2. 此时 <code>__forwarding</code> 指向堆上的自己。
+3. <code>__forwarding</code> 的作用的就是让 __block 修饰的变量不管在栈上还是在堆上都可以被正确的访问。</p>
 
-
-<p>为了进一步验证我们的猜想，在前边我们提到 <code>__Block_byref_val_0</code> 被复制到堆上时执行了 <code>_Block_byref_assign_copy</code> 这个函数，我们直接去看看源码的实现。</p>
+<p>那么 <code>__forwarding</code> 的指针是什么时候改变的呢，显然应该是在 <code>__Block_byref_val_0</code> 被复制到堆上时，为了验证我们的猜想，在前边我们提到 <code>__Block_byref_val_0</code> 被复制到堆上时执行了 <code>_Block_byref_assign_copy</code> 这个函数，我们直接去看看源码的实现。</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
