@@ -4,7 +4,7 @@
   <title><![CDATA[我的愚与渔]]></title>
   <link href="http://strzhao.github.io/atom.xml" rel="self"/>
   <link href="http://strzhao.github.io/"/>
-  <updated>2018-03-14T00:49:47+08:00</updated>
+  <updated>2018-03-14T21:36:35+08:00</updated>
   <id>http://strzhao.github.io/</id>
   <author>
     <name><![CDATA[Sring Zhao]]></name>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[谈谈 Objective-C block 的实现]]></title>
-    <link href="http://strzhao.github.io/blog/2018/03/11/block-liao-jie-%5B%3F%5D-xia/"/>
+    <link href="http://strzhao.github.io/blog/2018/03/11/block-liao-jie-xia/"/>
     <updated>2018-03-11T12:13:52+08:00</updated>
-    <id>http://strzhao.github.io/blog/2018/03/11/block-liao-jie-[?]-xia</id>
+    <id>http://strzhao.github.io/blog/2018/03/11/block-liao-jie-xia</id>
     <content type="html"><![CDATA[<h2>我是前言</h2>
 
 <p>这篇文章是我自己最近在学习 block 后的一个简单总结。<br/>
