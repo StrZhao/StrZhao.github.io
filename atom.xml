@@ -4,7 +4,7 @@
   <title><![CDATA[我的愚与渔]]></title>
   <link href="http://strzhao.github.io/atom.xml" rel="self"/>
   <link href="http://strzhao.github.io/"/>
-  <updated>2018-03-14T22:52:08+08:00</updated>
+  <updated>2018-03-15T02:33:35+08:00</updated>
   <id>http://strzhao.github.io/</id>
   <author>
     <name><![CDATA[Sring Zhao]]></name>
@@ -38,12 +38,112 @@ block 是<a href="https://zh.wikipedia.org/wiki/%E9%97%AD%E5%8C%85_(%E8%AE%A1%E7
 
 <blockquote><p>带有自动变量的匿名函数</p></blockquote>
 
-<p>所以现在问题的核心就是如何在 C 上实现带有自动变量的匿名函数。</p>
+<p>所以现在问题的核心就是如何在 C 上实现带有<em>自动变量</em>的<em>匿名函数</em>。<br/>
+实现不能脱离语言本身的语法特性，我们先来看看捕获变量和匿名函数在 C 可以如何体现的。</p>
 
-<p>闭包的典型实现方式是定义一个特殊的数据结构，保存了函数地址指针与闭包创建时的函数的词法环境。
-C 语言的 block 实现也确实是这样的思路，而其中定义数据结构，保存函数指针和函数词法环境这样的脏活d都交给编译器去完成了。</p>
+<p>我们知道 C 语言不存在匿名函数的，函数编译后就是地址了，我们调用函数一定要通过函数名来调用。</p>
 
-<p><em>数据结构</em>，<em>函数指针</em>，<em>函数词法环境</em>，牢记这几个核心点，我们一起来看看编译器都是怎么完成这些工作的。</p>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="nf">fun</span><span class="p">(</span><span class="kt">int</span> <span class="n">count</span><span class="p">);</span>
+</span><span class='line'><span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>但是既然是地址，那么使用指针，保存这个地址然后就可以不通过函数名来调用了。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">funPtr</span><span class="p">)(</span><span class="kt">int</span><span class="p">)</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">fun</span><span class="p">;</span>
+</span><span class='line'><span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">funPtr</span><span class="p">)(</span><span class="mi">10</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>而关于捕获变量, C 中可以操作的变量有以下这些:</p>
+
+<ul>
+<li>局部变量</li>
+<li>函数参数</li>
+<li>静态变量 （可以捕获）</li>
+<li>全局变量 （可以捕获）</li>
+</ul>
+
+
+<p>我们来看个捕获全局变量的例子：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="n">val</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class='line'><span class="kt">void</span> <span class="nf">fun</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="err">‘</span><span class="o">%</span><span class="n">d</span><span class="err">’</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span> <span class="c1">// 捕获</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">val</span><span class="o">++</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">fun</span><span class="p">();</span> <span class="c1">// 打印的值和捕获的不一致</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><del>代码是可以编译运行的，但是这里捕获变量没有办法做到捕获正确的变量值。不合适</del><br/>
+<del>另一个实现方式是可以通过参数传递进去，然而这样要严格固定函数自身的定义，不合适。</del><br/>
+而我们知道在 C++ 或者 Objective-C 是可以捕获值，那么另一个思路就是构造对象来捕获变量。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">struct</span> <span class="n">wrapVal</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">val</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">void</span> <span class="n">fun</span><span class="p">(</span><span class="k">struct</span> <span class="n">wrapVal</span> <span class="n">val</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="err">‘</span><span class="o">%</span><span class="n">d</span><span class="err">’</span><span class="p">,</span> <span class="n">val</span><span class="p">.</span><span class="n">val</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>按照这个思路在 C 上实现闭包的步骤大概是这样：</p>
+
+<ul>
+<li>定义一个结构体 block 用于捕获变量和函数地址</li>
+<li>定义函数</li>
+<li>生成 block 对象，赋值变量和函数地址</li>
+<li>在需要调用的地方把 block 传递过去即可</li>
+</ul>
+
+
+<p>这样就已经实现了，但是如果是这样去写闭包的话效率就太低了。</p>
+
+<p>我们来看真实的 block</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="o">^</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="err">‘</span><span class="o">%</span><span class="n">d</span><span class="err">’</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>没有结构体和函数的定义，也没有构造对象赋值的过程，那么这些脏活是在什么时候谁来处理了呢？</p>
+
+<p>我们知道 Objective-C 为了实现消息机制，需要把函数调用都替换为 <code>objc_msgSend(obj, sel_resigtName("method:"), ...)</code>，如果也让开发者自己去写这样的代码，显然效率也太低了，于是通过 <code>[]</code> 把这个过程很好的隐藏了起来，而让编译器来负责这个脏活。</p>
+
+<p>而回到 block 这里，编译器也悄悄的完成了这些繁琐的事情，
+而提供给我们一个非常可口的语法糖。</p>
+
+<h3>使用 clang 验证</h3>
+
+<p>牢记之前的实现思路，下边我们一起来看看编译器都是怎么完成这些工作的。</p>
 
 <p>我们新建一个 main.c, 其中代码如下:</p>
 
@@ -62,7 +162,7 @@ C 语言的 block 实现也确实是这样的思路，而其中定义数据结�
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>然后我们执行下边命令，clang 可以把带有 block 的源代码转换成 C++ 的代码。</p>
+
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 </pre></td><td class='code'><pre><code class='c'><span class='line'><span class="n">clang</span> <span class="o">-</span><span class="n">rewrite</span><span class="o">-</span><span class="n">objc</span> <span class="n">main</span><span class="p">.</span><span class="n">c</span>
@@ -136,7 +236,7 @@ C 语言的 block 实现也确实是这样的思路，而其中定义数据结�
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>可以看到 block 通过在编译后就是普通的 C++ 代码了，围绕之前的核心要点我们逐个来分析下，首先是数据结构部分 <code>__main_block_impl_0</code>，我们把结构体拍扁，然后去掉构造函数。</p>
+<p>可以看到编译后就是普通的 C++ 代码了，围绕之前的核心要点我们逐个来分析下，首先是结构体部分 <code>__main_block_impl_0</code>，我们把结构体拍扁，然后去掉构造函数。</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -187,8 +287,9 @@ C 语言的 block 实现也确实是这样的思路，而其中定义数据结�
 
 
 <p>对应的就是之前 block 的表达式部分。<br/>
-编译器把一个表达式根据它所属的类以及在类中出现的顺序在编译成一个普通的 C 函数, 而 block 对象持有了这个函数的函数指针，此时 block 就已经可以调用了。<br/>
-而其中的参数 <code>struct __main_block_impl_0 *__cself</code> 非常有意思，因为他很好的体现了编译器是如何处理 Objective-C 的 OC 方法的，我们来看一个普通的 OC 方法：</p>
+编译器把一个表达式根据它所属的类以及在类中出现的顺序在编译成一个普通的 C 函数, 而 block 对象持有了这个函数的函数指针，此时 block 就已经可以调用了。</p>
+
+<p>说点题外话，因为其中的参数 <code>struct __main_block_impl_0 *__cself</code> 非常有意思，他很好的体现了编译器是如何处理 Objective-C 的 OC 方法的，我们来看一个普通的 OC 方法：</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -232,9 +333,9 @@ C 语言的 block 实现也确实是这样的思路，而其中定义数据结�
 
 <p>这里的 block 就是在<em>栈</em>上构造的 <code>__main_block_impl_0</code> 结构体，其中参数为 <code>__main_block_func_0</code> 函数指针和 <code>__main_block_desc_0_DATA</code> 静态的结构体指针。</p>
 
-<p>至此基本明白了 block 的实现，我们总结一下：block 会被编译成一个 C 结构体对象和一个 C 函数，且 C 结构体拥有这个 C 函数指针。<br/>
+<p>至此验证了 block 的实现，我们总结一下：block 会被编译成一个 C 结构体对象和一个 C 函数，且 C 结构体拥有这个 C 函数指针。<br/>
 定义一个 block 就是初始化一个该 C 结构体的结构体指针，block 的调用就是调用该结构体指针指向的 C 函数, 并且把自己作为参数传递进去。<br/>
-但是我们也多了很多疑问，我们先做一个记录，后边再来一一解释：</p>
+但是我们有很多疑问没有解决，我们先做一个记录，后边再来一一解释：</p>
 
 <ul>
 <li>block 对象是在栈上的，那么如何超出作用域而存在 ？</li>
@@ -242,7 +343,7 @@ C 语言的 block 实现也确实是这样的思路，而其中定义数据结�
 </ul>
 
 
-<h3>block 如何捕获变量</h3>
+<h2>block 如何捕获变量</h2>
 
 <p>我们先继续之前的 block 实现，把自动变量的实现先弄明白。<br/>
 C 函数中可能用到的变量有很多，其中全局静态变量和全局变量显然直接使用就好了，不需要特别处理。
@@ -326,7 +427,7 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 
 <p>那么想要在 block 中修改 val 要怎么做呢？就要用到我们经常使用的 __block 修饰符。（局部静态变量也可以但是几乎不用）</p>
 
-<h4>__block 修饰符</h4>
+<h3>__block 修饰符</h3>
 
 <p>我们可以先试着猜测一下 <code>__block</code> 修饰符会做什么，先前 block 通过构造结构体捕获了匿名函数和变量，达到可以随意使用匿名函数和变量的目的，现在会怎么做？<br/>
 想好了，那我们继续来看 <code>__block</code> 修饰符都做了什么。</p>
@@ -462,9 +563,9 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 </ul>
 
 
-<h3>block 的生命周期管理</h3>
+<h2>block 的生命周期管理</h2>
 
-<h4>block 的生命周期管理</h4>
+<h3>block 的生命周期管理</h3>
 
 <p>稀缺是一个基本事实，在计算机中也是，正如堆栈的设计是为了提高内存的使用效率, 不同类型的 block 也是基于这样的目的设计的，也我们来看看 block 的几个类型：</p>
 
@@ -709,7 +810,7 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 
 <p><del>但是在某些情况下系统是无法高效的做出判断的，那么就需要我们自己来调用 <code>copy</code> 把 block 复制到堆上，例如 <code>[NSArray initWithObjects:]</code> 方法，如果我们不手动的执行 <code>copy</code> 当获取数组中的对象并且执行时是会崩溃的。大家可以自行尝试。</del> MRC 情况下才会出现, ARC 不会。</p>
 
-<h4>block 引用变量的生命周期管理</h4>
+<h3>block 引用变量的生命周期管理</h3>
 
 <p>block 的生命周期管理可以很好的处理了，但我们发现麻烦事还没有结束，因为 block 还需要保证引用的变量的生命周期。
 而在 block 被复制到堆上的过程中，block 一共需要处理 4 种类型的变量，而这些处理都是通过 <code>__main_block_desc_0</code> 中的 <code>copy</code> 来处理的。<br/>
@@ -820,7 +921,7 @@ C 函数中可能用到的变量有很多，其中全局静态变量和全局变
 <p>至此 <code>__block_byref_val_0</code> 对象的生命周期在 block 被复制时也得到很好的管理了。<br/>
 当堆上的 block 被释放时 <code>dispose</code> 也可能会被执行，从而在释放自动变量。</p>
 
-<h4>__forwarding 的意义</h4>
+<h3>__forwarding 的意义</h3>
 
 <p>理解完 block 和 <code>__block_byref_val_0</code> 的复制操作，那么再来理解 <code>__forwarding</code> 就非常顺利了。<br/>
 我们来看一段代码</p>
