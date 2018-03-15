@@ -4,7 +4,7 @@
   <title><![CDATA[我的愚与渔]]></title>
   <link href="http://strzhao.github.io/atom.xml" rel="self"/>
   <link href="http://strzhao.github.io/"/>
-  <updated>2018-03-15T02:33:35+08:00</updated>
+  <updated>2018-03-15T08:38:19+08:00</updated>
   <id>http://strzhao.github.io/</id>
   <author>
     <name><![CDATA[Sring Zhao]]></name>
@@ -41,7 +41,7 @@ block 是<a href="https://zh.wikipedia.org/wiki/%E9%97%AD%E5%8C%85_(%E8%AE%A1%E7
 <p>所以现在问题的核心就是如何在 C 上实现带有<em>自动变量</em>的<em>匿名函数</em>。<br/>
 实现不能脱离语言本身的语法特性，我们先来看看捕获变量和匿名函数在 C 可以如何体现的。</p>
 
-<p>我们知道 C 语言不存在匿名函数的，函数编译后就是地址了，我们调用函数一定要通过函数名来调用。</p>
+<p>我们知道 C 语言是不存在匿名函数的，调用函数一般通过函数名去调用。</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -50,7 +50,7 @@ block 是<a href="https://zh.wikipedia.org/wiki/%E9%97%AD%E5%8C%85_(%E8%AE%A1%E7
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>但是既然是地址，那么使用指针，保存这个地址然后就可以不通过函数名来调用了。</p>
+<p>但是函数编译完后就是一个地址，所以可以通过函数指针间接的保存和调用函数。<code>(*funPtr)</code> 就是 C 这样的编译型语言上的匿名函数。</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -92,7 +92,7 @@ block 是<a href="https://zh.wikipedia.org/wiki/%E9%97%AD%E5%8C%85_(%E8%AE%A1%E7
 
 <p><del>代码是可以编译运行的，但是这里捕获变量没有办法做到捕获正确的变量值。不合适</del><br/>
 <del>另一个实现方式是可以通过参数传递进去，然而这样要严格固定函数自身的定义，不合适。</del><br/>
-而我们知道在 C++ 或者 Objective-C 是可以捕获值，那么另一个思路就是构造对象来捕获变量。</p>
+而我们知道在 C++ 或者 Objective-C 中的对象是可以捕获值的，那么另一个思路就是构造对象来捕获变量， 而对象其实就是结构体指针。</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -105,8 +105,8 @@ block 是<a href="https://zh.wikipedia.org/wiki/%E9%97%AD%E5%8C%85_(%E8%AE%A1%E7
 </span><span class='line'>    <span class="kt">int</span> <span class="n">val</span><span class="p">;</span>
 </span><span class='line'><span class="p">}</span>
 </span><span class='line'>
-</span><span class='line'><span class="kt">void</span> <span class="n">fun</span><span class="p">(</span><span class="k">struct</span> <span class="n">wrapVal</span> <span class="n">val</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="err">‘</span><span class="o">%</span><span class="n">d</span><span class="err">’</span><span class="p">,</span> <span class="n">val</span><span class="p">.</span><span class="n">val</span><span class="p">);</span>
+</span><span class='line'><span class="kt">void</span> <span class="n">fun</span><span class="p">(</span><span class="k">struct</span> <span class="n">wrapVal</span> <span class="o">*</span><span class="n">val</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="err">‘</span><span class="o">%</span><span class="n">d</span><span class="err">’</span><span class="p">,</span> <span class="n">val</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">);</span>
 </span><span class='line'><span class="p">}</span>
 </span></code></pre></td></tr></table></div></figure>
 
